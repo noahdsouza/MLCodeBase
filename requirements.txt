@@ -11,11 +11,6 @@ ipython==6.2.1
 numpy==1.14.0
 pep8==1.7.0
 Pillow==5.0.0
-pycosat==0.6.3
-pycups==1.9.73
-pycurl==7.43.0
-pydot==1.2.4
-pygcode==0.2.1
 pyparsing==2.2.0
 python-apt==1.1.0b1
 python-dateutil==2.6.1
