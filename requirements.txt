@@ -12,4 +12,3 @@ numpy==1.14.0
 pep8==1.7.0
 Pillow==5.0.0
 pyparsing==2.2.0
-ubuntu-drivers-common==0.0.0
