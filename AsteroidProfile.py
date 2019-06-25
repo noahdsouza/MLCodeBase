@@ -13,25 +13,36 @@ class AsteroidProfile():
         from astropy.io import fits
         # num is the 'NUMBER' (Running object number) parameter in SoEx ouput
         #   NOTE: this is the number label WITHIN the column, not the row index
-        # imgpath is the parent image filepath
-        # csvpath is the parent csv data filepath
+        # imgpath is the parent image filepath (probably from an ImageProfile)
+        # csvpath is the parent csv data filepath ('' '' '' '')
         # cut is a tuple (pos,loc,show,size) for the FITSthumbnail function
-        self.num = num # int (running object number within parent SoEx data)
-        self.imgpath = imgpath # String (parent image filepath)
-        self.imgdata = FITSprocess(self.imgpath) # numpy.ndarray (image data)
+        '''
+        This class serves as a pseudo-child of ImageProfile. It doesn't
+        actually 'inherit' it, but they work in conjuction in a parent-child
+        'style' relationship, but like the kid is financially independent and
+        calls the parent every other week at most. AsteroidProfile, like
+        ImageProfile, builds a frame based on a FITS image, but instead of
+        holding data on the entire image, it focuses on a single object within
+        the image (found by Source Extractor). It clips the image into a
+        thumbnail of just the object (from coordinates) and holds data on that
+        object that is used in AsTroid
+        '''
+        self.num = num # 'int' (running object number within parent SoEx data)
+        self.imgpath = imgpath # 'String' (parent image filepath)
+        self.imgdata = FITSprocess(self.imgpath) # 'numpy.ndarray' (image data)
         self.originHeader = fits.open(self.imgpath)[0].header
-            # astropy.io.fits.header.Header (parent FITS header)
-        self.cutout = FITSthumbnail(   # astropy.nddata.utils.Cutout2D
+            # 'astropy.io.fits.header.Header' (parent FITS header)
+        self.cutout = FITSthumbnail(   # 'astropy.nddata.utils.Cutout2D'
                         self.imgdata,  # (thumbnail object data)
                         cut[0],
                         cut[3],
                         cut[1],
                         cut[2])
-        self.thumbpath = cut[1] # String (thumbnail image filepath)
+        self.thumbpath = cut[1] # 'String' (thumbnail image filepath)
         self.thumbHeader = self.__thumbHeaderMake()
-            # astropy.io.fits.header.Header (thumbnail FITS header)
-        self.csvpath = csvpath # String (parent CSV table filepath)
-        self.SoExData = self.__SoExDataMake() # dict (SoEx data of object only)
+            # 'astropy.io.fits.header.Header' (thumbnail FITS header)
+        self.csvpath = csvpath # 'String' (parent CSV table filepath)
+        self.SoExData = self.__SoExDataMake() # 'dict' (SoEx object data only)
 
     def __str__(self):
         # this is what '>>> print(self)' returns
@@ -43,23 +54,6 @@ class AsteroidProfile():
     def __repr__(self):
         # this is what '>>> self' returns
         return 'Object #%s from %s' % (self.num,self.imgpath)
-
-    # def __getstate__(self):
-    #     state = self.__dict__.copy()
-    #     del state['imgdata'], state['cutout']
-    #     return state
-    #
-    # def __setstate__(self,d):
-    #     self.__dict__ = d
-    #     from makeThumbnail import FITSthumbnail
-    #     from makeThumbnail import FITSprocess
-    #     self.imgdata = FITSprocess(self.imgpath)
-    #     self.cutout = FITSthumbnail(
-    #                     self.imgdata,
-    #                     cut[0],
-    #                     cut[3],
-    #                     cut[1],
-    #                     cut[2])
 
     def __thumbHeaderMake(self):
         # Creates an updated header for the thumbnail from the parent FITS image
@@ -86,16 +80,19 @@ class AsteroidProfile():
             output = output + i + '\n'
         return output
 
-    def displayProfile(self):
-        # TODO: I'll get to it eventually. Unless Tinder for Asteroids does it.
-        return
+    # def displayProfile(self):
+    #     # NOTE: Tinder for Asteroids (AsTroid) does this with much more
+    #     # functionality than expected, so this isn't a necessary function.
+    #     # If someone wants to make it, go ahead.
+    #     return
 
     def save(self,filename):
         # filename is string with the filename.
         # NOTE: savefile excludes 'imgdata' and 'cutout' to save space and so
         # that pickle doesn't get angry at you for saving unsupported filetypes
-        # NOTE: save with a .dict extension. For organization.
-        # if y'all are too lazy to do that, uncomment the next line.
+        # NOTE: save with a .dict extension. For organization purposes.
+        # if y'all are too lazy to do that, uncomment the next line. Keep in
+        # mind that AsTroid adds the extension automatically
         # filename = filename + '.dict'
         import pickle
         out = {

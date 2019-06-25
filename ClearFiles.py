@@ -1,3 +1,13 @@
+'''
+Last updated Thursday June 20, 2019
+Author: Noah D'Souza
+Designed and tested on Python 3.6.3
+'''
+
+# This is just a utility script to make my life easier when testing AsTroid.py
+# Pay no attention to this script unless you also want to get rid of all the
+# AsTroid output periodically
+
 import os, shutil
 
 yea = 'YES/'
@@ -15,3 +25,6 @@ for g in filelistN:
 filelistM = [ h for h in os.listdir(may)]
 for h in filelistM:
     shutil.rmtree(may + h)
+
+if os.path.isfile('txtpath.txt'):
+    os.remove('txtpath.txt')

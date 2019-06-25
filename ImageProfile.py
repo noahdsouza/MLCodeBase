@@ -7,18 +7,22 @@ Designed and tested on Python 3.6.3
 class ImageProfile:
     # Class to store a lorg FITS image and its dummy thicc SoEx output
 
-    # from TXTtoCSV import TXTtoCSV
-    # from makeThumbnail import FITSprocess
-
     def __init__(self,imgpath,txtpath=None):
         from makeThumbnail import FITSprocess
         from TXTtoCSV import TXTtoCSV
         from astropy.io import fits
-        # from astropy.wcs import WCS
         # imgpath is the filepath of the FITS image
         # txtpath is the filepath of the original .txt SoEx data
         # imgdata is an astropy data frame of the FITS image
         # csvpath is the filepath of the SoEx data in a new CSV table
+        '''
+        This class takes a FITS image path and a text file full of its Source
+        Extractor output (only input the text path if it's named differently
+        than the image path other than the extensions). With those two, it
+        formats the data from both into more palatable forms and is used as a
+        middleman in the AsTroid pipeline, but can stand alone just for data
+        extraction purposes.
+        '''
         self.imgpath = imgpath
         if txtpath == None:
             self.txtpath = imgpath[:-4]+'txt'
@@ -45,11 +49,12 @@ class ImageProfile:
     def __repr__(self):
         return 'ImageProfile("%s","%r")' % (self.imgpath, self.txtpath)
 
-    def getCoords(self,xparam,yparam):
+    def getCoords(self,xparam,yparam,num,flags):
         # REVIEW:
         # Turns the two given columns into a zero-indexed list of tuples.
-        # If you have a columns X and Y with elements |X1;X2;X3| and |Y1;Y2;Y3|,
-        # then this will return [(X1,Y1),(X2,Y2),(X3,Y3)]
+        # If you have columns X, Y, Z, and W with elements [X1;X2;X3],
+        # [Y1;Y2;Y3], [Z1;Z2;Z3], and [W1,;W2;W3], then this will return
+        # [(X1,Y1,Z1,W1), (X2,Y2,Z2,W2), (X3,Y3,Z3,W3)]
         # xparam and yparam are (generally) the SoEx output parameters that
         # represent coordinates of found objects
         from csv import DictReader
@@ -57,19 +62,15 @@ class ImageProfile:
             Xcoords = [row[xparam] for row in DictReader(m)]
         with open(self.csvpath) as n:
             Ycoords = [row[yparam] for row in DictReader(n)]
+        with open(self.csvpath) as o:
+            Nums = [row[num] for row in DictReader(o)]
+        with open(self.csvpath) as p:
+            Flags = [row[flags] for row in DictReader(p)]
         # make a list of (X,Y) tuples
         coords = []
         for i in range(len(Xcoords)-1):
-            coords.append((Xcoords[i],Ycoords[i]))
+            coords.append((Xcoords[i],Ycoords[i],Nums[i],Flags[i]))
         return coords
-
-    # def getHeader(self):
-    #     # REVIEW: this should(?) spit out a header and wcs object?
-    #     from astropy.io import fits
-    #     from astropy.wcs import WCS
-    #     self.hdu = fits.open(self.imgpath)[0]
-    #     self.wcs = WCS(self.hdu.header)
-
 
 # from ImageProfile import ImageProfile
 # imgprof = ImageProfile('20020109022041d.fits','p20020109-20020109022041d-sex-cat.txt')

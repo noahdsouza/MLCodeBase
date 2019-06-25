@@ -1,5 +1,5 @@
 '''
-Last updated Friday June 7, 2019
+Last updated Friday June 21, 2019
 Author: Noah D'Souza
 Designed and tested on Python 3.6.3
 '''
@@ -47,20 +47,58 @@ def FITSthumbnail(image_data, pos, size, loc, show=0):
     from astropy.nddata import Cutout2D
     import matplotlib
     import matplotlib.pyplot as plt
+    import matplotlib.patches as ptch
     import numpy as np
+
+    imgrows = image_data.shape[0]
+    imgcols = image_data.shape[1]
 
     # make cutout data
     cutout = Cutout2D(image_data, pos, size)
 
     # XXX
     # save the cutout as a PNG
-    plt.imshow(cutout.data, cmap='gray', origin='lower')
-    plt.savefig(loc)
+    figC, axC = plt.subplots()
+    axC.imshow(cutout.data, cmap='gray', origin='lower')
+    axC.spines['bottom'].set_color('blue')
+    axC.spines['top'].set_color('blue')
+    axC.spines['left'].set_color('blue')
+    axC.spines['right'].set_color('blue')
+    axC.tick_params(axis='x',colors='blue')
+    axC.tick_params(axis='y',colors='blue')
+    figC.savefig(loc,facecolor='black')
     plt.close('all')
+
+    # # save cutout image again but with a dot in the center of the objects
+    # figD, axD = plt.subplots()
+    # im = axD.imshow(image_data, cmap='gray', origin='lower')
+    # axD.plot(pos[0],pos[1])
+    # axD.spines['bottom'].set_color('blue')
+    # axD.spines['top'].set_color('blue')
+    # axD.spines['left'].set_color('blue')
+    # axD.spines['right'].set_color('blue')
+    # axD.tick_params(axis='x',colors='blue')
+    # axD.tick_params(axis='y',colors='blue')
+    # # barr = np.array([[pos[0]-int(size/2),pos[1]-int(size/2)],
+    # #                  [pos[0]+int(size/2),pos[1]+int(size/2)]])
+    # # b = matplotlib.transforms.Bbox.from_bounds(pos[0]/100,pos[1]/100,0.4,0.4)
+    # patch = ptch.Rectangle((pos[0],pos[1]),40,40)
+    # im.set_clip_path(patch)
+    # figD.savefig(loc[:-4]+'DOT.png',facecolor='black')
+    # plt.close('all')
+
     # save big image with bounding box
-    plt.imshow(image_data, cmap='gray', origin='lower')
+    figB, axB = plt.subplots()
+    axB.imshow(image_data, cmap='gray', origin='lower')
     cutout.plot_on_original(color='red')
-    plt.savefig(loc[:-4]+'F.png')
+    axB.spines['bottom'].set_color('blue')
+    axB.spines['top'].set_color('blue')
+    axB.spines['left'].set_color('blue')
+    axB.spines['right'].set_color('blue')
+    axB.tick_params(axis='x',colors='blue')
+    axB.tick_params(axis='y',colors='blue')
+    figB.savefig(loc[:-4]+'F.png',facecolor='black')
+    plt.close('all')
     # XXX
 
     # optional plotting
