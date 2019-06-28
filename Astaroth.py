@@ -1,7 +1,7 @@
 '''
-Last updated Tuesday June 25, 2019
+Last updated Friday June 28, 2019
 Author: Noah D'Souza
-Designed and tested on Python 3.6.3
+Designed and tested in Python 3.6.3
 '''
 
 import tkinter as tk
@@ -12,37 +12,44 @@ import os
 import pickle
 import sys
 
-class AsTroid(tk.Tk):
+class Astaroth(tk.Tk):
 
     def __init__(self, num):
         tk.Tk.__init__(self)
         self.configure(bg='black')
         '''
-        This class builds "Tinder for Asteroids" a.k.a. AsTroid
+        This class builds "Tinder for Asteroids" a.k.a. Astaroth.
         This code file should be placed in an appropriately constructed
         filesystem such that it can naturally loop. The codebase should contain
         directories: FITS_IMAGES (with N number of files), FITS_TEXT (with N
         number of files), FITS_CSV (with zero files), YES, NO, and MAYBE.
-        FITS_CSV will be populated with N number of
-        files one at a time as FITS images are processed. Input the number of
-        objects you wish to extract (maximum is defined by the CSV by SoEx) when
-        prompted, and a window will pop up. Input the image filepath (which
-        should start with 'FITS_IMAGES/') into the IMAGE FILEPATH field and
-        either click the SUBMIT button or hit the Enter key. The window will
-        then display a thumbnail of the object as well as its parent image (with
-        a bounding box in the object's region). At this point you can click
-        'nah' (left arrow key), 'maybe' (down arrow key), or 'yea' (right arrow
-        key). This will kill the window, put the thumbnail, parent, and a
-        dictionary with data in a folder within the YES, NO, or MAYBE folder in
-        your codebase directory depending on which button you selected. The
-        window will then reopen automatically. Hit Enter to resubmit the same
-        parent image path, or enter a new one and hit Enter. Continue this
-        process until the 'num' parameter you input is exhausted. Each folder
-        in the YES, NO, and MAYBE folders will be named after the thumbnail, and
-        contains the thumbnail (.png), parent image (F.png with bounding box),
-        and data file (.dict) of the object's AsteroidProfile instance.
-        Most of the (private) functions run (relatively) sequentially, so I hope
-        this isn't too hard to follow :)
+        FITS_CSV will be populated with N number of files one at a time as FITS
+        images are processed. Input the number of objects you wish to extract
+        (maximum is defined by the CSV by SoEx) when prompted, and a window will
+        pop up. Input the image filepath (which should start with
+        'FITS_IMAGES/') into the IMAGE FILEPATH field and either click the
+        SUBMIT button or hit the Enter key. The window will then display a
+        thumbnail of the object as well as its parent image (with a bounding box
+        in the object's region). At this point you can click 'nah' (left arrow
+        key), 'maybe' (down arrow key), or 'yea' (right arrow key). This will
+        kill the window, put the thumbnail, parent, and a dictionary with data
+        in a folder within the YES, NO, or MAYBE folder in your codebase
+        directory depending on which button you selected. The window will then
+        reopen automatically. Hit Enter to resubmit the same parent image path,
+        or enter a new one and hit Enter. Continue this process until the 'num'
+        parameter you input is exhausted. Each folder in the YES, NO, and MAYBE
+        folders will be named after the thumbnail, and contains the thumbnail
+        (.png), parent image (F.png with bounding box), and data file (.dict) of
+        the object's AsteroidProfile instance. Most of the (private) functions
+        run (relatively) sequentially, so I hope this isn't too hard to follow
+        :)
+        *** NEW (optional) Fast Mode removes the need to hit Enter to resubmit,
+            and does it automatically. This does mean, however, that you can't
+            submit a different image easily in the middle, and the new back
+            button (see below) also probably won't work too well
+        *** NEW Back Button decrements 'num' and sends you back by one thumbnail
+            Keep in mind, this one is new and developed hastily. It may not work
+            super well at the moment.
         '''
 
         self.imgpath = None
@@ -53,6 +60,10 @@ class AsTroid(tk.Tk):
         self.pos = None
         self.__cwidth = 680
         self.__cheight = 480
+        w, h = 1550, 650
+        ws, hs = self.winfo_screenwidth(), self.winfo_screenheight()
+        x, y = ((ws/2)-(w/2)), ((hs/2)-(h/2))
+        self.geometry('%dx%d+%d+%d' % (w, h, x, y))
 
         ''' INPUT FILEPATHS '''
         tk.Label(self, text='IMAGE FILEPATH', anchor='e', width=20, bg='black',
@@ -234,7 +245,7 @@ class AsTroid(tk.Tk):
         else:
             num = self.num - 1
             self.destroy()
-            self = AsTroid(num)
+            self = Astaroth(num)
 
 
 
@@ -242,7 +253,7 @@ def nOBJslow():
     print('PRESS ENTER TO SUBMIT IMAGE FILEPATH')
     i = 0
     while i<int(r):
-        app = AsTroid(i)
+        app = Astaroth(i)
         app.mainloop()
         i+=1
 def nOBJfast():
@@ -250,7 +261,7 @@ def nOBJfast():
     # disable the back button
     i = 0
     while i<int(r):
-        app = AsTroid(i)
+        app = Astaroth(i)
         if i!=0:
             app.submit.invoke()
         app.mainloop()
