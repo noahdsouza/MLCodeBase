@@ -11,13 +11,16 @@ from ImageProfile import ImageProfile
 import os
 import pickle
 import sys
+import shutil
 
 class Astaroth(tk.Tk):
 
     def __init__(self, num):
         tk.Tk.__init__(self)
+        self.winfo_toplevel().title("A S T A R O T H")
         self.configure(bg='black')
         '''
+        Yes I'm aware that "Astaroth" is a demon's name. It sounds cool.
         This class builds "Tinder for Asteroids" a.k.a. Astaroth.
         This code file should be placed in an appropriately constructed
         filesystem such that it can naturally loop. The codebase should contain
@@ -179,6 +182,8 @@ class Astaroth(tk.Tk):
         if not os.path.exists('YES'):
             os.mkdir('YES')
         try:
+            if os.path.exists('YES/'+self.thumbfolder):
+                shutil.rmtree('YES/'+self.thumbfolder)
             os.mkdir('YES/'+self.thumbfolder)
         except AttributeError:
             print('SUBMIT OR RESUBMIT FILEPATH (ENTER) BEFORE SWIPING')
@@ -198,6 +203,8 @@ class Astaroth(tk.Tk):
         if not os.path.exists('NO'):
             os.mkdir('NO')
         try:
+            if os.path.exists('NO/'+self.thumbfolder):
+                shutil.rmtree('NO/'+self.thumbfolder)
             os.mkdir('NO/'+self.thumbfolder)
         except AttributeError:
             print('SUBMIT OR RESUBMIT FILEPATH (ENTER) BEFORE SWIPING')
@@ -217,6 +224,8 @@ class Astaroth(tk.Tk):
         if not os.path.exists('MAYBE'):
             os.mkdir('MAYBE')
         try:
+            if os.path.exists('MAYBE/'+self.thumbfolder):
+                shutil.rmtree('MAYBE/'+self.thumbfolder)
             os.mkdir('MAYBE/'+self.thumbfolder)
         except AttributeError:
             print('SUBMIT OR RESUBMIT FILEPATH (ENTER) BEFORE SWIPING')
@@ -247,47 +256,55 @@ class Astaroth(tk.Tk):
             self.destroy()
             self = Astaroth(num)
 
+    # These are static utility functions for running Astaroth
+    @staticmethod
+    def nOBJslow(r):
+        print('PRESS ENTER TO SUBMIT IMAGE FILEPATH')
+        i = 0
+        while i<int(r):
+            app = Astaroth(i)
+            app.mainloop()
+            i+=1
 
+    @staticmethod
+    def nOBJfast(r):
+        print('FAST MODE ENABLED -- BACK BUTTON DISABLED')
+        # disable the back button
+        i = 0
+        while i<int(r):
+            app = Astaroth(i)
+            if i!=0:
+                app.submit.invoke()
+            app.mainloop()
+            i+=1
 
-def nOBJslow():
-    print('PRESS ENTER TO SUBMIT IMAGE FILEPATH')
-    i = 0
-    while i<int(r):
-        app = Astaroth(i)
-        app.mainloop()
-        i+=1
-def nOBJfast():
-    print('FAST MODE ENABLED -- BACK BUTTON DISABLED')
-    # disable the back button
-    i = 0
-    while i<int(r):
-        app = Astaroth(i)
-        if i!=0:
-            app.submit.invoke()
-        app.mainloop()
-        i+=1
-def modes(argument):
-    switcher = {
-        0: nOBJfast,
-        1: nOBJslow
-    }
-    func = switcher.get(argument, 'sad')
-    return func()
-def prompts():
-    r = input('ENTER NUMBER OF OBJECTS: ')
-    yn = None
-    if int(r) != 1:
-        yn = input('WOULD YOU LIKE TO USE FAST MODE? (Y/N): ')
-    return r, yn
+    @staticmethod
+    def modes(argument, r):
+        switcher = {
+            0: Astaroth.nOBJfast,
+            1: Astaroth.nOBJslow
+        }
+        func = switcher.get(argument, 'sad')
+        return func(r)
+    @staticmethod
+    def prompts():
+        r = input('ENTER NUMBER OF OBJECTS: ')
+        yn = None
+        if int(r) != 1:
+            yn = input('WOULD YOU LIKE TO USE FAST MODE? (Y/N): ')
+        return r, yn
+
+    @staticmethod
+    def runAstaroth():
+        r, yn = Astaroth.prompts()
+        Astaroth.modes((0 if ((yn=='Y' or yn=='y') and r!=1) else 1), r)
+        os.remove('txtpath.txt')
 
 ''' M A I N L O O P   T I M E '''
 if __name__ == "__main__":
     # Do this stuff if the file is called as the main piece of code
     # This will be ignored if the file is imported for other purposes
-    r, yn = prompts()
-    modes(0 if ((yn=='Y' or yn=='y') and r!=1) else 1)
-    os.remove('txtpath.txt')
-
+    Astaroth.runAstaroth()
 
 
 # FITS_IMAGES/g19960516960516061758d.fits
