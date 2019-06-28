@@ -47,9 +47,9 @@ class Astaroth(tk.Tk):
             and does it automatically. This does mean, however, that you can't
             submit a different image easily in the middle, and the new back
             button (see below) also probably won't work too well
-        *** NEW Back Button decrements 'num' and sends you back by one thumbnail
-            Keep in mind, this one is new and developed hastily. It may not work
-            super well at the moment.
+        *** NEW Back Button (up arrow key) decrements 'num' and sends you back
+            by one thumbnail. Keep in mind, this one is new and developed
+            hastily. It may not work super well at the moment.
         '''
 
         self.imgpath = None
