@@ -16,9 +16,11 @@ import shutil
 class Astaroth(tk.Tk):
 
     def __init__(self, num):
+    # def __init__(self, num, fastmode=False):
         tk.Tk.__init__(self)
         self.winfo_toplevel().title("A S T A R O T H")
         self.configure(bg='black')
+        # self.fastmode = fastmode
         '''
         Yes I'm aware that "Astaroth" is a demon's name. It sounds cool.
         This class builds "Tinder for Asteroids" a.k.a. Astaroth.
@@ -53,6 +55,8 @@ class Astaroth(tk.Tk):
         *** NEW Back Button (up arrow key) decrements 'num' and sends you back
             by one thumbnail. Keep in mind, this one is new and developed
             hastily. It may not work super well at the moment.
+        *** NEW static functions at the bottom of the class, specifically
+            Astaroth.runAstaroth(), help make running the program a bit easier
         '''
 
         self.imgpath = None
@@ -252,9 +256,10 @@ class Astaroth(tk.Tk):
         if self.num == 1:
             print('NOTHING TO GO BACK TO BRUH')
         else:
-            num = self.num - 1
+            self.num = self.num - 1
             self.destroy()
-            self = Astaroth(num)
+            self = Astaroth(self.num)
+            self.submit.invoke()
 
     # These are static utility functions for running Astaroth
     @staticmethod
@@ -263,6 +268,7 @@ class Astaroth(tk.Tk):
         i = 0
         while i<int(r):
             app = Astaroth(i)
+            # app = Astaroth(i, fastmode=False)
             app.mainloop()
             i+=1
 
@@ -273,6 +279,7 @@ class Astaroth(tk.Tk):
         i = 0
         while i<int(r):
             app = Astaroth(i)
+            # app = Astaroth(i, fastmode=True)
             if i!=0:
                 app.submit.invoke()
             app.mainloop()
