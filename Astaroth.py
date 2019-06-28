@@ -126,9 +126,9 @@ class Astaroth(tk.Tk):
 
     def __getPaths(self,event=None):
         # Get image and text filepaths from input (see __init__) and save it
-        # If this isn't your first rodeo (iteration or Asteroid), then it'll
-        # take the saved path and reinput it with a 'SUBMIT' button  invocation
-        # Also define an ImageProfile object
+        # If this isn't your first rodeo (iteration or asteroid), then it'll
+        # take the saved path and reinput it with a 'SUBMIT' button invocation
+        # Also call Astaroth.__makeImgProf()
         if not os.path.isfile('txtpath.txt'):
             self.imgpath = self.imgpathIN.get()
             pickle.dump(self.imgpath, open('txtpath.txt','wb'))
@@ -144,6 +144,9 @@ class Astaroth(tk.Tk):
         self.__makeImgProf()
 
     def __makeImgProf(self):
+        # Make an ImageProfile object and scrape it for relevant data
+        # Make an AsteroidProfile object from one (1) object's worth of said
+        # relevant data and then move onto calling Astaroth.__putImages()
         self.ImgProf = ImageProfile(self.imgpath,self.txtpath)
             # build parent ImageProfile
             # FIXME: maybe pickle this too for all objects? Space&Speed saving
@@ -162,8 +165,9 @@ class Astaroth(tk.Tk):
         self.__putImages()
 
     def __putImages(self):
-        # place images into the window
-        # BOUNDING BOX IMAGE
+        # Place images into the blank canvases defined in the __init__ and label
+        # them with their filenames
+        # PLACE BOUNDING BOX IMAGE
         self.imgL = ImageTk.PhotoImage(Image.open(self.thumbfolder+'F.png'))
         self.canvasL.create_image(self.__cwidth/2, self.__cheight/2,
                         anchor='center', image=self.imgL)
@@ -171,7 +175,7 @@ class Astaroth(tk.Tk):
         tk.Label(self, text=self.thumbfolder+'F.png', anchor='center',
                         bg='black', fg='gray', width=35,
                         font=('Arial',14)).grid(row=3,column=0)
-        # THUMBNAIL
+        # PLACE THUMBNAIL
         self.imgR = ImageTk.PhotoImage(Image.open(self.thumbfolder+'.png'))
         self.canvasR.create_image(self.__cwidth/2, self.__cheight/2,
                         anchor='center', image=self.imgR)
@@ -180,9 +184,14 @@ class Astaroth(tk.Tk):
                         bg='black', fg='gray', width=35,
                         font=('Arial',14)).grid(row=3,column=2)
 
+    # Before you ask me "Noah, why didn't you just make one function with a
+    # 'decision' parameter instead of three separate ones?" Well, it's because I
+    # hate you. That's why. (It's actually because Tkinter doesn't like it when
+    # you bind different things to the same function, even if it takes a
+    # different parameter.) I could ~probably~ fix it with switchcases? Probably.
     def __swipeYeah(self,event=None):
-        # add AsteroidProfile to 'YES' pile
-        # kill window
+        # add relevant AsteroidProfile and images to the 'YES' pile
+        # kill window so that the loop (see: @staticmethods) can progress
         if not os.path.exists('YES'):
             os.mkdir('YES')
         try:
@@ -198,12 +207,10 @@ class Astaroth(tk.Tk):
                 'YES/'+self.thumbfolder+'/'+self.thumbfolder+'F.png')
             self.AstProf.save(
                 'YES/'+self.thumbfolder+'/'+self.thumbfolder+'.dict')
-            # print(str(self.num) + ' ' + self.thumbfolder + '\n')
             self.destroy()
-
     def __swipeNahh(self,event=None):
-        # add AsteroidProfile to 'NO' pile
-        # kill window
+        # add relevant AsteroidProfile and images to the 'NO' pile
+        # kill window so that the loop (see: @staticmethods) can progress
         if not os.path.exists('NO'):
             os.mkdir('NO')
         try:
@@ -219,12 +226,10 @@ class Astaroth(tk.Tk):
                 'NO/'+self.thumbfolder+'/'+self.thumbfolder+'F.png')
             self.AstProf.save(
                 'NO/'+self.thumbfolder+'/'+self.thumbfolder+'.dict')
-            # print(str(self.num) + ' ' + self.thumbfolder + '\n')
             self.destroy()
-
     def __swipeMayb(self,event=None):
-        # add AsteroidProfile to 'MAYBE' pile
-        # kill window
+        # add relevant AsteroidProfile and images to the 'MAYBE' pile
+        # kill window so that the loop (see: @staticmethods) can progress
         if not os.path.exists('MAYBE'):
             os.mkdir('MAYBE')
         try:
@@ -240,10 +245,11 @@ class Astaroth(tk.Tk):
                 'MAYBE/'+self.thumbfolder+'/'+self.thumbfolder+'F.png')
             self.AstProf.save(
                 'MAYBE/'+self.thumbfolder+'/'+self.thumbfolder+'.dict')
-            # print(str(self.num) + ' ' + self.thumbfolder + '\n')
             self.destroy()
 
     def __exit(self, event=None):
+        # Delete everything that we don't want just lying around
+        # Kill literally everything until it's very, very dead.
         if hasattr(self, 'thumbfolder'):
             if (os.path.isfile(self.thumbfolder+'.png') and
                 os.path.isfile(self.thumbfolder+'F.png')):
@@ -253,6 +259,9 @@ class Astaroth(tk.Tk):
         sys.exit()
 
     def backb(self, event=None):
+        # Should theoretically take you back one step in the loop (it does not)
+        # Instead it takes you back one, then skips when you progress afterwards
+        # It also takes ~10 years off of your natural lifespan with every use.
         if self.num == 1:
             print('NOTHING TO GO BACK TO BRUH')
         else:
@@ -264,6 +273,7 @@ class Astaroth(tk.Tk):
     # These are static utility functions for running Astaroth
     @staticmethod
     def nOBJslow(r):
+        # Regular mode, requires a manual invocation of the SUBMIT button
         print('PRESS ENTER TO SUBMIT IMAGE FILEPATH')
         i = 0
         while i<int(r):
@@ -274,6 +284,7 @@ class Astaroth(tk.Tk):
 
     @staticmethod
     def nOBJfast(r):
+        # Fast mode, SUBMIT is invoked automatically after a swipe
         print('FAST MODE ENABLED -- BACK BUTTON DISABLED')
         # disable the back button
         i = 0
@@ -287,6 +298,7 @@ class Astaroth(tk.Tk):
 
     @staticmethod
     def modes(argument, r):
+        # picks a mode based on user input with switchcases
         switcher = {
             0: Astaroth.nOBJfast,
             1: Astaroth.nOBJslow
@@ -295,6 +307,7 @@ class Astaroth(tk.Tk):
         return func(r)
     @staticmethod
     def prompts():
+        # Gets user input for loop length and mode
         r = input('ENTER NUMBER OF OBJECTS: ')
         yn = None
         if int(r) != 1:
@@ -303,6 +316,7 @@ class Astaroth(tk.Tk):
 
     @staticmethod
     def runAstaroth():
+        # Run that shit back, homeboy.
         r, yn = Astaroth.prompts()
         Astaroth.modes((0 if ((yn=='Y' or yn=='y') and r!=1) else 1), r)
         os.remove('txtpath.txt')
