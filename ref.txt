@@ -1,0 +1,13 @@
+'HALEAKALA GEODSS'
+'mpcCode'   = '566'
+'submitter' = 'NOT_AVAILABLE'
+'observers' = 'NOT_AVAILABLE'
+'measurers' = ['C. Nugent','N. Tan','C. Xue','N. DSouza']
+'design'    = ''
+'aperture'  = ''
+'detector'  = ''
+'mode'      = 'CCD'
+'stn'       = '566'
+'astCat'    = ''
+'trkSub'    = ''
+'band'      = ''

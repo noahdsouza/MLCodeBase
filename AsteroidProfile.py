@@ -1,5 +1,5 @@
 '''
-Last updated Tuesday June 11, 2019
+Last updated Tuesday July 2, 2019
 Author: Noah D'Souza
 Designed and tested on Python 3.6.3
 '''
@@ -75,6 +75,7 @@ class AsteroidProfile():
 
     def __printDict(self):
         # Literally just turns the SoExData dictionary into a readble string
+        # I doubt anyone will use this for anything other than debugging lol
         output = ''
         for i in self.SoExData:
             output = output + i + '\n'
@@ -91,9 +92,10 @@ class AsteroidProfile():
         # NOTE: savefile excludes 'imgdata' and 'cutout' to save space and so
         # that pickle doesn't get angry at you for saving unsupported filetypes
         # NOTE: save with a .dict extension. For organization purposes.
-        # if y'all are too lazy to do that, uncomment the next line. Keep in
-        # mind that AsTroid adds the extension automatically
-        # filename = filename + '.dict'
+        # if y'all are too lazy to do that, uncomment the next two code lines.
+        # Keep in mind that AsTroid adds the extension automatically
+        # if filename[-5:] != '.dict':
+        #     filename = filename + '.dict'
         import pickle
         out = {
             'num': self.num,

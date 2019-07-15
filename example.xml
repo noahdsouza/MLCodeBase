@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ades version="2017">
+  <obsBlock>
+    <obsContext>
+      <observatory>
+        <mpcCode>568</mpcCode>
+        <name>Univ. Hawaii</name>
+      </observatory>
+      <submitter>
+        <name>I. M. Submit</name>
+      </submitter>
+      <observers>
+        <name>I. M. Observit</name>
+        <name>A. N. Astronomer</name>
+      </observers>
+      <measurers>
+        <name>I.M. Measurit</name>
+        <name>A. N. Skywatcher</name>
+      </measurers>
+      <telescope>
+        <design>reflector</design>
+        <aperture>2.2</aperture>
+        <detector>CCD</detector>
+      </telescope>
+      <fundingSource>Name of Funding Agency</fundingSource>
+      <comment>
+        <line>This is the first comment.</line>
+        <line>This is the second comment</line>
+      </comment>
+    </obsContext>
+    <obsData>
+      <optical>
+        <permID>1234567</permID>
+        <provID>2018 AA1234</provID>
+        <trkSub>alb2c3d4</trkSub>
+        <mode>CCD</mode>
+        <stn>568a</stn>
+        <prog>31</prog>
+        <obsTime>2016-08-27T12:32:34.12Z</obsTime>
+        <ra>215.6560501</ra>
+        <dec>-13.5478723</dec>
+        <rmsRA>0.015</rmsRA>
+        <rmsDec>0.013</rmsDec>
+        <rmsCorr>0.215</rmsCorr>
+        <astCat>2MASS</astCat>
+        <mag>21.91</mag>
+        <band>w</band>
+        <photCat>PPMXL</photCat>
+        <photAp>13.3</photAp>
+        <logSNR>0.78</logSNR>
+        <seeing>0.8</seeing>
+        <exp>1200</exp>
+        <notes>klmnp</notes>
+        <remarks>High winds affected tracking</remarks>
+      </optical>
+    </obsData>
+</obsBlock>
+</ades>

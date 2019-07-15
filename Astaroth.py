@@ -1,5 +1,5 @@
 '''
-Last updated Friday June 28, 2019
+Last updated Monday July 1, 2019
 Author: Noah D'Souza
 Designed and tested in Python 3.6.3
 '''
@@ -280,6 +280,7 @@ class Astaroth(tk.Tk):
             app = Astaroth(i)
             # app = Astaroth(i, fastmode=False)
             app.mainloop()
+            print(i)
             i+=1
 
     @staticmethod
@@ -294,6 +295,7 @@ class Astaroth(tk.Tk):
             if i!=0:
                 app.submit.invoke()
             app.mainloop()
+            print(i)
             i+=1
 
     @staticmethod
