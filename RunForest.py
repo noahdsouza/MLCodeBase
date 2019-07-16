@@ -27,6 +27,23 @@ class RunForest:
         self.ts = RunForest.testsize
         self.rs = RunForest.randomstate
 
+    def __str__(self):
+        # print('RunForest object')
+        if not (hasattr(self, 'X_tr') and hasattr(self, 'X_te') and
+                hasattr(self, 'y_tr') and hasattr(self, 'y_te')):
+            return 'RunForest Object \nNo training set made yet'
+        if hasattr(self, 'analysis'):
+            return '''
+            RunForest object
+            True Positives:  %s
+            False Positives: %s
+            True Negatives:  %s
+            False Negatives: %s
+            ''' % (self.analysis.tp, self.analysis.fp,
+                   self.analysis.tn, self.analysis.fn)
+        elif hasattr(self, 'y_pred_tree'):
+            return 'RunForest object \nFit has been run'
+
     def prepDictList(self):
         import os
         self.dictlist = []
@@ -72,9 +89,10 @@ class RunForest:
 
     def runRFC(self, tsR=testsize, rsR=randomstate):
         from sklearn.ensemble import RandomForestClassifier as RFC
+        # from sklearn.ensemble import ExtraTreesClassifier as ETC
         if not (hasattr(self, 'X_tr') and hasattr(self, 'X_te') and
                 hasattr(self, 'y_tr') and hasattr(self, 'y_te')):
-            print("NO TRAINING SET FOUND. MAKING TRAINING SET NOW...")
+            # print("NO TRAINING SET FOUND. MAKING TRAINING SET NOW...")
             self.makeTrainSet(ts=tsR,rs=rsR)
         else:
             print("USING PRE-EXISTING TRAINING SET. IGNORING KEYWORD ARGUMENTS.")
@@ -212,36 +230,59 @@ class RunForest:
             shrimp and potatoes, shrimp burger...
             """)
 
-
+# I'm a helper function for the mainloop
+def worker(x,i,ret_dict):
+    tpt, fpt, tnt, fnt = [],[],[],[]
+    for j in x:
+        rf = RunForest()
+        rf.runRFC(tsR=j, rsR=i)
+        rf.analytics()
+        tpt.append(rf.analysis.tp/(rf.analysis.tp+rf.analysis.fn))
+        fpt.append(rf.analysis.fp/(rf.analysis.fp+rf.analysis.tn))
+        tnt.append(rf.analysis.tn/(rf.analysis.tn+rf.analysis.fp))
+        fnt.append(rf.analysis.fn/(rf.analysis.fn+rf.analysis.tp))
+    ret_dict[i] = {'tpt':tpt, 'fpt':fpt, 'tnt':tnt, 'fnt':fnt}
 
 if __name__ == '__main__':
-    # rf = RunForest()
-    # rf.runRFC()
-    # rf.plotRFC()
-    # print(type(rf.y_pred_tree))
     import matplotlib.pyplot as plt
     import numpy as np
     from time import time
-    # import sys, getopt
+    import multiprocessing
     tpt, fpt, tnt, fnt = [],[],[],[]
-    x = np.linspace(0.9,0.1,40)
-    xr = np.linspace(0.1,0.9,40)
-    # y = [21,23,25,27,29,31,33,35,37,39,41,43]
+    x = np.linspace(0.9,0.1,20)
+    xr = np.linspace(0.1,0.9,20)
+    # y = [21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43]
     y = [23,37,43]
-    # arglist = sys.argv
     fig, ax = plt.subplots()
-    st = time()
+    # let's do some multiprocessing, bitch
+    st = time() # just for getting the runtime
+    manager = multiprocessing.Manager()
+    ret_dict = manager.dict()
+    processes = []
     for i in y:
-        for j in x:
-            rf = RunForest()
-            rf.runRFC(tsR=j, rsR=i)
-            rf.analytics()
-            tpt.append(rf.analysis.tp/(rf.analysis.tp+rf.analysis.fn))
-            fpt.append(rf.analysis.fp/(rf.analysis.fp+rf.analysis.tn))
-            tnt.append(rf.analysis.tn/(rf.analysis.tn+rf.analysis.fp))
-            fnt.append(rf.analysis.fn/(rf.analysis.fn+rf.analysis.tp))
-        ax.plot(xr,tpt,'r--', xr,fpt,'bs-' ,xr,tnt,'g^-' ,xr,fnt,'k*-')
-        tpt, fpt, tnt, fnt = [],[],[],[]
+        process = multiprocessing.Process(target=worker, args=(x,i,ret_dict))
+        processes.append(process)
+    for m in processes:
+        m.start()
+        print('Starting:',m)
+        # m.join()              # use these two lines to single process
+        # print('Ending:  ',m)
+    print('Working...')
+    for n in processes:
+        n.join()
+        print('Ending:  ',n)
+    # print(ret_dict)
+    # for k,v in ret_dict.items(): #use this for printing ret_dict
+    #     print(k,'{')
+    #     for k1,v1 in v.items():
+    #         print('    ',k1,'{')
+    #         for v2 in v1:
+    #             print('        ',v2)
+    #         print('        }')
+    #     print('     }')
+    for k,v in ret_dict.items():
+        ax.plot(xr,v['tpt'],'ro-', xr,v['fpt'],'bs-' ,
+                xr,v['tnt'],'g^-' ,xr,v['fnt'],'k*-')
     print(time()-st)
     ax.set_xlabel('Training Set Percentage (decimal)')
     ax.set_ylabel('Rate')
@@ -250,6 +291,7 @@ if __name__ == '__main__':
     ax.legend(['TruPos','FalPos','TruNeg','FalNeg'],title='Rates',
               loc='center left', bbox_to_anchor=(1,0.5))
     plt.show()
+    # YEEEEEEEAAAAAAH BOOOOOOOIIIIIIIII
 
 
 

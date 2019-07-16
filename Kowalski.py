@@ -109,14 +109,6 @@ class Kowalski:
 
 
 
-
-
-
-
-
-
-
-
 if __name__ == '__main__':
     print('''
         Kowalski, analysis...
