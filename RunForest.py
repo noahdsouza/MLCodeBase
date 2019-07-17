@@ -95,6 +95,11 @@ class RunForest:
                 hasattr(self, 'y_tr') and hasattr(self, 'y_te')):
             # print("NO TRAINING SET FOUND. MAKING TRAINING SET NOW...")
             self.makeTrainSet(ts=tsR,rs=rsR)
+        elif ((self.ts != tsR or RunForest.testsize != tsR) or
+              (self.rs != rsR or RunForest.randomstate != rsR)):
+            self.ts = tsR
+            self.rs = rsR
+            self.makeTrainSet(ts=tsR,rs=rsR)
         else:
             print("USING PRE-EXISTING TRAINING SET. IGNORING KEYWORD ARGUMENTS.")
             print("RE-RUN RunForest.makeTrainSet() IF YOU WANT NEW KWARGS.")
@@ -237,14 +242,14 @@ class RunForest:
 # I'm a helper function for the mainloop
 def worker(x,i,ret_dict):
     tpt, fpt, tnt, fnt = [],[],[],[]
+    rf = RunForest()
     for j in x:
-        rf = RunForest()
         rf.runRFC(tsR=j, rsR=i)
         rf.analytics()
-        tpt.append(rf.analysis.tp/(rf.analysis.tp+rf.analysis.fn))
-        fpt.append(rf.analysis.fp/(rf.analysis.fp+rf.analysis.tn))
-        tnt.append(rf.analysis.tn/(rf.analysis.tn+rf.analysis.fp))
-        fnt.append(rf.analysis.fn/(rf.analysis.fn+rf.analysis.tp))
+        tpt.append(rf.analysis.tp)#/(rf.analysis.tp+rf.analysis.fn))
+        fpt.append(rf.analysis.fp)#/(rf.analysis.fp+rf.analysis.tn))
+        tnt.append(rf.analysis.tn)#/(rf.analysis.tn+rf.analysis.fp))
+        fnt.append(rf.analysis.fn)#/(rf.analysis.fn+rf.analysis.tp))
     ret_dict[i] = {'tpt':tpt, 'fpt':fpt, 'tnt':tnt, 'fnt':fnt}
 
 if __name__ == '__main__':
@@ -253,11 +258,11 @@ if __name__ == '__main__':
     from time import time
     import multiprocessing
     tpt, fpt, tnt, fnt = [],[],[],[]
-    x = np.linspace(0.9,0.1,40)
-    xr = np.linspace(0.1,0.9,40)
-    # y = [21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43]
+    x = np.linspace(0.95,0.05,60)
+    xr = np.linspace(0.05,0.95,60)
+    y = [21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43]
     # y = [23,37,43]
-    y = [23,25,27,29,31,33,35,37,39,41,43]
+    # y = [23,25,27,29,31,33,35,37,39,41,43]
     # y = [42]
     fig, ax = plt.subplots()
     # let's do some multiprocessing, bitch
@@ -287,11 +292,21 @@ if __name__ == '__main__':
     #         print('        }')
     #     print('     }')
     for k,v in ret_dict.items():
-        ax.plot(xr,v['tpt'],'ro', xr,v['fpt'],'bs' ,
-                xr,v['tnt'],'g^' ,xr,v['fnt'],'k*')
+        ax.plot(xr,v['tpt'],'ro-', xr,v['fpt'],'bs-' ,
+                xr,v['tnt'],'g^-' ,xr,v['fnt'],'y*-')
     print(time()-st)
     ax.set_xlabel('Training Set Percentage (decimal)')
     ax.set_ylabel('Rate')
+    ax.xaxis.label.set_color('white')
+    ax.yaxis.label.set_color('white')
+    ax.set_facecolor('black')
+    fig.set_facecolor('black')
+    ax.spines['bottom'].set_color('white')
+    ax.spines['top'].set_color('white')
+    ax.spines['left'].set_color('white')
+    ax.spines['right'].set_color('white')
+    ax.tick_params(axis='x',colors='white')
+    ax.tick_params(axis='y',colors='white')
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width*0.8, box.height*0.8])
     ax.legend(['TruPos','FalPos','TruNeg','FalNeg'],title='Rates',
