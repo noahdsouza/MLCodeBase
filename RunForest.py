@@ -51,8 +51,9 @@ class RunForest:
             self.dictlist.append(RunForest.prepDict('NO',fname))
         for fname in os.listdir('YES/'):
             self.dictlist.append(RunForest.prepDict('YES',fname))
-        for fname in os.listdir('MAYBE/'):
-            self.dictlist.append(RunForest.prepDict('MAYBE',fname))
+        # for fname in os.listdir('MAYBE/'):
+        #     # only use this one if you're using 'MAYBE' objects
+        #     self.dictlist.append(RunForest.prepDict('MAYBE',fname))
 
     def plotGroups(self):
         import matplotlib.pyplot as plt
@@ -135,6 +136,7 @@ class RunForest:
 
     @staticmethod
     def typeFix(d):
+        # Turn numbers stored as strings into ints or floats
         for key in list(d):
             if key == d[key]:
                 d.pop(key)
@@ -153,8 +155,10 @@ class RunForest:
         RunForest.typeFix(tempdict)
         if dec == 'NO':
             tempdict['#_46_AST_STATUS'] = dec
-        else:
-            tempdict['#_46_AST_STATUS'] = 'YES'
+        # else: # this one throws all 'MAYBE' objects into the 'YES' pile
+        #     tempdict['#_46_AST_STATUS'] = 'YES'
+        elif dec == 'YES':
+            tempdict['#_46_AST_STATUS'] = dec
         return tempdict
 
     # NOTE: VERY IMPORTANT STATIC METHOD. DO NOT DELETE!!!!
@@ -249,10 +253,12 @@ if __name__ == '__main__':
     from time import time
     import multiprocessing
     tpt, fpt, tnt, fnt = [],[],[],[]
-    x = np.linspace(0.9,0.1,20)
-    xr = np.linspace(0.1,0.9,20)
+    x = np.linspace(0.9,0.1,40)
+    xr = np.linspace(0.1,0.9,40)
     # y = [21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43]
-    y = [23,37,43]
+    # y = [23,37,43]
+    y = [23,25,27,29,31,33,35,37,39,41,43]
+    # y = [42]
     fig, ax = plt.subplots()
     # let's do some multiprocessing, bitch
     st = time() # just for getting the runtime
@@ -281,8 +287,8 @@ if __name__ == '__main__':
     #         print('        }')
     #     print('     }')
     for k,v in ret_dict.items():
-        ax.plot(xr,v['tpt'],'ro-', xr,v['fpt'],'bs-' ,
-                xr,v['tnt'],'g^-' ,xr,v['fnt'],'k*-')
+        ax.plot(xr,v['tpt'],'ro', xr,v['fpt'],'bs' ,
+                xr,v['tnt'],'g^' ,xr,v['fnt'],'k*')
     print(time()-st)
     ax.set_xlabel('Training Set Percentage (decimal)')
     ax.set_ylabel('Rate')
