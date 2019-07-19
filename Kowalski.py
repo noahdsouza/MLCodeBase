@@ -1,5 +1,5 @@
 '''
-Last updated Friday July 12, 2019
+Last updated Thursday July 18, 2019
 Author: Noah D'Souza
 Designed and tested on Python 3.6.3
 '''
@@ -7,6 +7,7 @@ class Kowalski:
 
     def __init__(self,forest):
         from sklearn.metrics import confusion_matrix
+        from sklearn.metrics import recall_score, precision_score
         from collections import OrderedDict
         '''
         forest is a RunForest object
@@ -31,6 +32,13 @@ class Kowalski:
         # of with this data that I'm using an OrderedDict just to be safe.
         for k,v in sorted(fi.items(), reverse=True, key=lambda item: item[1]):
             self.ftImp[k] = v
+        self.recall = recall_score(self.__frst.y_te, self.__frst.y_pred_tree)
+        # "The recall is intuitively the ability of the classifier to find all
+        # the positive samples."
+        self.precision = precision_score(self.__frst.y_te,
+            self.__frst.y_pred_tree)
+        # "The precision is intuitively the ability of the classifier not to
+        # label as positive a sample that is negative."
 
     def collect(self):
         import numpy as np
@@ -59,6 +67,16 @@ class Kowalski:
             self.truNeg.append(self.__frst.X_te.iloc[i,:])
         for i in self.falNegInd:
             self.falNeg.append(self.__frst.X_te.iloc[i,:])
+        self.attachTags()
+
+    def attachTags(self):
+        # remember that truPos/falPos/truNeg/falNeg are LISTS
+        for i in [self.truPos, self.falPos, self.truNeg, self.falNeg]:
+            for row in i: # row is a pandas Series
+                testname = row.name
+                temp = self.__frst.df.loc[testname]
+                row['#_46_AST_STATUS'] = temp['#_46_AST_STATUS']
+                row['#_47_THUMB_PATH'] = temp['#_47_THUMB_PATH']
 
     # Pay no attention to this incredibly important static method
     @staticmethod

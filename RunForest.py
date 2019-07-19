@@ -1,5 +1,5 @@
 '''
-Last updated Friday July 12, 2019
+Last updated Thursday July 18, 2019
 Author: Noah D'Souza
 Designed and tested on Python 3.6.3
 '''
@@ -47,10 +47,13 @@ class RunForest:
     def prepDictList(self):
         import os
         self.dictlist = []
+        # self.foldernames = []
         for fname in os.listdir('NO/'):
             self.dictlist.append(RunForest.prepDict('NO',fname))
+            # self.foldernames.append(fname+'.png')
         for fname in os.listdir('YES/'):
             self.dictlist.append(RunForest.prepDict('YES',fname))
+            # self.foldernames.append(fname+'.png')
         # for fname in os.listdir('MAYBE/'):
         #     # only use this one if you're using 'MAYBE' objects
         #     self.dictlist.append(RunForest.prepDict('MAYBE',fname))
@@ -81,9 +84,15 @@ class RunForest:
             self.rs = rs
         le = LabelEncoder()
         le.fit(['NO','YES'])
+        # le.fit(self.foldernames)
         self.encoded = le.transform(self.df['#_46_AST_STATUS'])
+        # X_tr is a DataFrame of the training set's features
+        # X_te is a DataFrame of the test set's features
+        # y_tr is a numpy array of the training set's labels (binary encoded)
+        # y_te is a numpy array of the test set's labels (binary encoded)
         self.X_tr, self.X_te, self.y_tr, self.y_te = train_test_split(
-                        self.df.drop('#_46_AST_STATUS',axis=1),
+                        self.df.drop(['#_46_AST_STATUS','#_47_THUMB_PATH'],
+                            axis=1),
                         self.encoded,
                         test_size=self.ts,
                         random_state=self.rs)
@@ -101,9 +110,18 @@ class RunForest:
             self.rs = rsR
             self.makeTrainSet(ts=tsR,rs=rsR)
         else:
+            if tsR == self.ts:
+                print('tsR INPUT IS SAME AS CURRENT VALUE. IGNORING.')
+            if rsR == self.rs:
+                print('rsR INPUT IS SAME AS CURRENT VALUE. IGNORING.')
             print("USING PRE-EXISTING TRAINING SET. IGNORING KEYWORD ARGUMENTS.")
             print("RE-RUN RunForest.makeTrainSet() IF YOU WANT NEW KWARGS.")
-        self.f = RFC(n_estimators=100)#,n_jobs=-1)
+        # NB:   These RFC parameters can be changed!! Please do!!
+        # NOTE: increasing n_jobs actually makes this slower, so consider that
+        self.f = RFC(n_estimators=1000,
+                     max_features=1,
+                     oob_score=True,
+                     verbose=1)
         self.f.fit(self.X_tr, self.y_tr)
         self.y_pred_tree = self.f.predict(self.X_te)
 
@@ -156,6 +174,7 @@ class RunForest:
         # dec is 'YES', 'NO', or 'MAYBE'
         # fn is a filename
         tempdict = pickle.load(open((dec+'/'+fn+'/'+fn+'.dict'),'rb'))
+        thumbpath = tempdict['thumbpath']
         tempdict = tempdict['SoExData']
         RunForest.typeFix(tempdict)
         if dec == 'NO':
@@ -164,7 +183,87 @@ class RunForest:
         #     tempdict['#_46_AST_STATUS'] = 'YES'
         elif dec == 'YES':
             tempdict['#_46_AST_STATUS'] = dec
+        tempdict['#_47_THUMB_PATH'] = thumbpath
         return tempdict
+
+    def thickLoop(self):
+        # It's called thickLoop cause the loop is DUMMY thick.
+        # Like, it takes a while to run (x/xr and y dependent)
+        import matplotlib.pyplot as plt
+        import numpy as np
+        from time import time
+        import multiprocessing
+        tpt, fpt, tnt, fnt = [],[],[],[]
+        x = np.linspace(0.95,0.05,20)
+        xr = np.linspace(0.05,0.95,20)
+        # y = [21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43]
+        y = [23,37,43]
+        # y = [23,25,27,29,31,33,35,37,39,41,43]
+        # y = [42]
+        fig, ax = plt.subplots()
+        # let's do some multiprocessing, bitch
+        st = time() # just for getting the runtime
+        manager = multiprocessing.Manager()
+        ret_dict = manager.dict()
+        processes = []
+        for i in y:
+            process = multiprocessing.Process(target=RunForest.worker,
+                args=(x,i,ret_dict))
+            processes.append(process)
+        for m in processes:
+            m.start()
+            print('Starting:',m)
+        print('Working...')
+        for n in processes:
+            n.join()
+            print('Ending:  ',n)
+        # RunForest.print_ret_dict(ret_dict) # uncomment to print ret_dict
+        for k,v in ret_dict.items():
+            ax.plot(xr,v['tpt'],'ro-', xr,v['fpt'],'bs-' ,
+                    xr,v['tnt'],'g^-' ,xr,v['fnt'],'y*-')
+        print(time()-st)
+        ax.set_xlabel('Training Set Percentage (decimal)')
+        ax.set_ylabel('Rate')
+        ax.xaxis.label.set_color('white')
+        ax.yaxis.label.set_color('white')
+        ax.set_facecolor('black')
+        fig.set_facecolor('black')
+        ax.spines['bottom'].set_color('white')
+        ax.spines['top'].set_color('white')
+        ax.spines['left'].set_color('white')
+        ax.spines['right'].set_color('white')
+        ax.tick_params(axis='x',colors='white')
+        ax.tick_params(axis='y',colors='white')
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width*0.8, box.height*0.8])
+        ax.legend(['TruPos','FalPos','TruNeg','FalNeg'],title='Rates',
+                  loc='center left', bbox_to_anchor=(1,0.5))
+        plt.show()
+
+    # I'm a helper function for the mainloop
+    @staticmethod
+    def worker(x,i,ret_dict):
+        tpt, fpt, tnt, fnt = [],[],[],[]
+        rf = RunForest()
+        for j in x:
+            rf.runRFC(tsR=j, rsR=i)
+            rf.analytics()
+            tpt.append(rf.analysis.tp/(rf.analysis.tp+rf.analysis.fn))
+            fpt.append(rf.analysis.fp/(rf.analysis.fp+rf.analysis.tn))
+            tnt.append(rf.analysis.tn/(rf.analysis.tn+rf.analysis.fp))
+            fnt.append(rf.analysis.fn/(rf.analysis.fn+rf.analysis.tp))
+        ret_dict[i] = {'tpt':tpt, 'fpt':fpt, 'tnt':tnt, 'fnt':fnt}
+
+    @staticmethod
+    def print_ret_dict(ret):
+        for k,v in ret.items(): #use this for printing ret_dict
+            print(k,'{')
+            for k1,v1 in v.items():
+                print('    ',k1,'{')
+                for v2 in v1:
+                    print('        ',v2)
+                print('        }')
+            print('     }')
 
     # NOTE: VERY IMPORTANT STATIC METHOD. DO NOT DELETE!!!!
     @staticmethod
@@ -239,80 +338,16 @@ class RunForest:
             shrimp and potatoes, shrimp burger...
             """)
 
-# I'm a helper function for the mainloop
-def worker(x,i,ret_dict):
-    tpt, fpt, tnt, fnt = [],[],[],[]
-    rf = RunForest()
-    for j in x:
-        rf.runRFC(tsR=j, rsR=i)
-        rf.analytics()
-        tpt.append(rf.analysis.tp)#/(rf.analysis.tp+rf.analysis.fn))
-        fpt.append(rf.analysis.fp)#/(rf.analysis.fp+rf.analysis.tn))
-        tnt.append(rf.analysis.tn)#/(rf.analysis.tn+rf.analysis.fp))
-        fnt.append(rf.analysis.fn)#/(rf.analysis.fn+rf.analysis.tp))
-    ret_dict[i] = {'tpt':tpt, 'fpt':fpt, 'tnt':tnt, 'fnt':fnt}
-
 if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-    import numpy as np
+    # print('yeet')
     from time import time
-    import multiprocessing
-    tpt, fpt, tnt, fnt = [],[],[],[]
-    x = np.linspace(0.95,0.05,60)
-    xr = np.linspace(0.05,0.95,60)
-    y = [21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43]
-    # y = [23,37,43]
-    # y = [23,25,27,29,31,33,35,37,39,41,43]
-    # y = [42]
-    fig, ax = plt.subplots()
-    # let's do some multiprocessing, bitch
-    st = time() # just for getting the runtime
-    manager = multiprocessing.Manager()
-    ret_dict = manager.dict()
-    processes = []
-    for i in y:
-        process = multiprocessing.Process(target=worker, args=(x,i,ret_dict))
-        processes.append(process)
-    for m in processes:
-        m.start()
-        print('Starting:',m)
-        # m.join()              # use these two lines to single process
-        # print('Ending:  ',m)
-    print('Working...')
-    for n in processes:
-        n.join()
-        print('Ending:  ',n)
-    # print(ret_dict)
-    # for k,v in ret_dict.items(): #use this for printing ret_dict
-    #     print(k,'{')
-    #     for k1,v1 in v.items():
-    #         print('    ',k1,'{')
-    #         for v2 in v1:
-    #             print('        ',v2)
-    #         print('        }')
-    #     print('     }')
-    for k,v in ret_dict.items():
-        ax.plot(xr,v['tpt'],'ro-', xr,v['fpt'],'bs-' ,
-                xr,v['tnt'],'g^-' ,xr,v['fnt'],'y*-')
-    print(time()-st)
-    ax.set_xlabel('Training Set Percentage (decimal)')
-    ax.set_ylabel('Rate')
-    ax.xaxis.label.set_color('white')
-    ax.yaxis.label.set_color('white')
-    ax.set_facecolor('black')
-    fig.set_facecolor('black')
-    ax.spines['bottom'].set_color('white')
-    ax.spines['top'].set_color('white')
-    ax.spines['left'].set_color('white')
-    ax.spines['right'].set_color('white')
-    ax.tick_params(axis='x',colors='white')
-    ax.tick_params(axis='y',colors='white')
-    box = ax.get_position()
-    ax.set_position([box.x0, box.y0, box.width*0.8, box.height*0.8])
-    ax.legend(['TruPos','FalPos','TruNeg','FalNeg'],title='Rates',
-              loc='center left', bbox_to_anchor=(1,0.5))
-    plt.show()
-    # YEEEEEEEAAAAAAH BOOOOOOOIIIIIIIII
+    st = time()
+    rfc = RunForest()
+    rfc.runRFC()
+    rfc.analytics()
+    print(rfc.analysis.recall)
+    print('RUNTIME: ',time()-st)
+    # print(rfc.analysis.ftImp)
 
 
 
