@@ -1,5 +1,5 @@
 '''
-Last updated Monday July 1, 2019
+Last updated Wednesday July 24, 2019
 Author: Noah D'Souza
 Designed and tested in Python 3.6.3
 '''
@@ -321,7 +321,8 @@ class Astaroth(tk.Tk):
         # Run that shit back, homeboy.
         r, yn = Astaroth.prompts()
         Astaroth.modes((0 if ((yn=='Y' or yn=='y') and r!=1) else 1), r)
-        os.remove('txtpath.txt')
+        if os.path.isfile('txtpath.txt'):
+            os.remove('txtpath.txt')
 
 ''' M A I N L O O P   T I M E '''
 if __name__ == "__main__":

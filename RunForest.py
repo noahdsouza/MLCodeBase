@@ -1,5 +1,5 @@
 '''
-Last updated Thursday July 18, 2019
+Last updated Wednesday July 24, 2019
 Author: Noah D'Souza
 Designed and tested on Python 3.6.3
 '''
@@ -91,11 +91,27 @@ class RunForest:
         # y_tr is a numpy array of the training set's labels (binary encoded)
         # y_te is a numpy array of the test set's labels (binary encoded)
         self.X_tr, self.X_te, self.y_tr, self.y_te = train_test_split(
-                        self.df.drop(['#_46_AST_STATUS','#_47_THUMB_PATH'],
-                            axis=1),
-                        self.encoded,
-                        test_size=self.ts,
-                        random_state=self.rs)
+            self.df.drop([
+        '#_46_AST_STATUS',
+        '#_47_THUMB_PATH',
+        # '#_11_XMIN_IMAGE_Minimum_x-coordinate_among_detected_pixels_[pixel]',
+        # '#_15_X_IMAGE_Object_position_along_x_[pixel]',
+        # '#_3_ALPHAWIN_J2000_Windowed_right_ascension_(J2000)_[deg]',
+        # '#_17_X_IMAGE_DBL_Object_position_along_x_(double_precision)_[pixel]',
+        # '#_13_XMAX_IMAGE_Maximum_x-coordinate_among_detected_pixels_[pixel]',
+        # '#_5_XWIN_IMAGE_Windowed_position_estimate_along_x_[pixel]',
+        # '#_18_Y_IMAGE_DBL_Object_position_along_y_(double_precision)_[pixel]',
+        # '#_6_YWIN_IMAGE_Windowed_position_estimate_along_y_[pixel]',
+        # '#_14_YMAX_IMAGE_Maximum_y-coordinate_among_detected_pixels_[pixel]',
+        # '#_12_YMIN_IMAGE_Minimum_y-coordinate_among_detected_pixels_[pixel]',
+        # '#_4_DELTAWIN_J2000_windowed_declination_(J2000)_[deg]',
+        # '#_16_Y_IMAGE_Object_position_along_y_[pixel]',
+        # '#_1_NUMBER_Running_object_number_',
+        '#_2_FLAGS_Extraction_flags_'],
+                axis=1),
+            self.encoded,
+            test_size=self.ts,
+            random_state=self.rs)
 
     def runRFC(self, tsR=testsize, rsR=randomstate):
         from sklearn.ensemble import RandomForestClassifier as RFC
@@ -156,6 +172,7 @@ class RunForest:
     def analytics(self):
         from Kowalski import Kowalski
         self.analysis = Kowalski(self)
+        self.analysis.collect()
 
     @staticmethod
     def typeFix(d):
@@ -186,7 +203,28 @@ class RunForest:
         tempdict['#_47_THUMB_PATH'] = thumbpath
         return tempdict
 
-    def thickLoop(self):
+    @staticmethod
+    def repeatOffenders(num):
+        # import random
+        import multiprocessing
+        manager = multiprocessing.Manager()
+        ret_dict = manager.dict()
+        processes = []
+        for i in range(num):
+            process = multiprocessing.Process(target=RunForest.workerRO,
+                args=(i,ret_dict))
+            processes.append(process)
+        for m in processes:
+            m.start()
+            # print('Starting:',m)
+        print('Working...')
+        for n in processes:
+            n.join()
+            # print('Ending:  ',n)
+        return ret_dict
+
+    @staticmethod
+    def thickLoop():
         # It's called thickLoop cause the loop is DUMMY thick.
         # Like, it takes a while to run (x/xr and y dependent)
         import matplotlib.pyplot as plt
@@ -207,7 +245,7 @@ class RunForest:
         ret_dict = manager.dict()
         processes = []
         for i in y:
-            process = multiprocessing.Process(target=RunForest.worker,
+            process = multiprocessing.Process(target=RunForest.workerTL,
                 args=(x,i,ret_dict))
             processes.append(process)
         for m in processes:
@@ -242,7 +280,7 @@ class RunForest:
 
     # I'm a helper function for the mainloop
     @staticmethod
-    def worker(x,i,ret_dict):
+    def workerTL(x,i,ret_dict):
         tpt, fpt, tnt, fnt = [],[],[],[]
         rf = RunForest()
         for j in x:
@@ -253,6 +291,24 @@ class RunForest:
             tnt.append(rf.analysis.tn/(rf.analysis.tn+rf.analysis.fp))
             fnt.append(rf.analysis.fn/(rf.analysis.fn+rf.analysis.tp))
         ret_dict[i] = {'tpt':tpt, 'fpt':fpt, 'tnt':tnt, 'fnt':fnt}
+
+    @staticmethod
+    def workerRO(i,ret_dict):
+        import random
+        rf = RunForest()
+        # repeats = {}
+        # for i in range(num):
+        rf.runRFC(rsR=random.randint(20,57))
+        rf.analytics()
+        rf.analysis.collect()
+        pics = []
+        for i in rf.analysis.falNeg:
+            pics.append(i['#_47_THUMB_PATH'][:-4])
+        for j in pics:
+            if j not in ret_dict:
+                ret_dict[j] = 0
+            elif j in ret_dict:
+                ret_dict[j] = ret_dict[j] + 1
 
     @staticmethod
     def print_ret_dict(ret):
@@ -341,12 +397,17 @@ class RunForest:
 if __name__ == '__main__':
     # print('yeet')
     from time import time
+    recalls = 0
+    runs = 20
     st = time()
     rfc = RunForest()
-    rfc.runRFC()
-    rfc.analytics()
-    print(rfc.analysis.recall)
+    for i in range(runs):
+        rfc.runRFC()
+        rfc.analytics()
+        recalls = recalls + rfc.analysis.recall
+    # print(rfc.analysis.recall)
     print('RUNTIME: ',time()-st)
+    print(recalls/runs)
     # print(rfc.analysis.ftImp)
 
 
