@@ -75,41 +75,49 @@ class RunForest:
 
     def makeTrainSet(self,ts=testsize,rs=randomstate):
         from sklearn.model_selection import train_test_split
-        from sklearn.preprocessing import LabelEncoder
+        from sklearn.preprocessing import LabelBinarizer
         # ts is a float portion of the data put into the test set
         # rs is an int seed for the random state
         if ts != RunForest.testsize:
             self.ts = ts
         if rs != RunForest.randomstate:
             self.rs = rs
-        le = LabelEncoder()
-        le.fit(['NO','YES'])
-        # le.fit(self.foldernames)
-        self.encoded = le.transform(self.df['#_46_AST_STATUS'])
+        le = LabelBinarizer()
+        # le.fit(['NO','YES'])
+        self.df['#_46_AST_STATUS'] = le.fit_transform(
+            self.df['#_46_AST_STATUS'].values)
+        # self.df['#_47_THUMB_PATH'] = le.fit_transform(
+        #     self.df['#_47_THUMB_PATH'].values)
+        self.targets = self.df['#_46_AST_STATUS']
+        self.fnames = self.df['#_47_THUMB_PATH']
+        # self.encoded = le.transform(self.df['#_46_AST_STATUS'])
+        self.df.drop(['#_46_AST_STATUS',
+                      '#_47_THUMB_PATH',
+                      '#_2_FLAGS_Extraction_flags_'],
+                      axis=1, inplace=True)
+        # self.df.drop([
+        # '#_46_AST_STATUS',
+        # '#_47_THUMB_PATH',
+        # # '#_11_XMIN_IMAGE_Minimum_x-coordinate_among_detected_pixels_[pixel]',
+        # # '#_15_X_IMAGE_Object_position_along_x_[pixel]',
+        # # '#_3_ALPHAWIN_J2000_Windowed_right_ascension_(J2000)_[deg]',
+        # # '#_17_X_IMAGE_DBL_Object_position_along_x_(double_precision)_[pixel]',
+        # # '#_13_XMAX_IMAGE_Maximum_x-coordinate_among_detected_pixels_[pixel]',
+        # # '#_5_XWIN_IMAGE_Windowed_position_estimate_along_x_[pixel]',
+        # # '#_18_Y_IMAGE_DBL_Object_position_along_y_(double_precision)_[pixel]',
+        # # '#_6_YWIN_IMAGE_Windowed_position_estimate_along_y_[pixel]',
+        # # '#_14_YMAX_IMAGE_Maximum_y-coordinate_among_detected_pixels_[pixel]',
+        # # '#_12_YMIN_IMAGE_Minimum_y-coordinate_among_detected_pixels_[pixel]',
+        # # '#_4_DELTAWIN_J2000_windowed_declination_(J2000)_[deg]',
+        # # '#_16_Y_IMAGE_Object_position_along_y_[pixel]',
+        # # '#_1_NUMBER_Running_object_number_',
+        # '#_2_FLAGS_Extraction_flags_']
         # X_tr is a DataFrame of the training set's features
         # X_te is a DataFrame of the test set's features
         # y_tr is a numpy array of the training set's labels (binary encoded)
         # y_te is a numpy array of the test set's labels (binary encoded)
-        self.X_tr, self.X_te, self.y_tr, self.y_te = train_test_split(
-            self.df.drop([
-        '#_46_AST_STATUS',
-        '#_47_THUMB_PATH',
-        # '#_11_XMIN_IMAGE_Minimum_x-coordinate_among_detected_pixels_[pixel]',
-        # '#_15_X_IMAGE_Object_position_along_x_[pixel]',
-        # '#_3_ALPHAWIN_J2000_Windowed_right_ascension_(J2000)_[deg]',
-        # '#_17_X_IMAGE_DBL_Object_position_along_x_(double_precision)_[pixel]',
-        # '#_13_XMAX_IMAGE_Maximum_x-coordinate_among_detected_pixels_[pixel]',
-        # '#_5_XWIN_IMAGE_Windowed_position_estimate_along_x_[pixel]',
-        # '#_18_Y_IMAGE_DBL_Object_position_along_y_(double_precision)_[pixel]',
-        # '#_6_YWIN_IMAGE_Windowed_position_estimate_along_y_[pixel]',
-        # '#_14_YMAX_IMAGE_Maximum_y-coordinate_among_detected_pixels_[pixel]',
-        # '#_12_YMIN_IMAGE_Minimum_y-coordinate_among_detected_pixels_[pixel]',
-        # '#_4_DELTAWIN_J2000_windowed_declination_(J2000)_[deg]',
-        # '#_16_Y_IMAGE_Object_position_along_y_[pixel]',
-        # '#_1_NUMBER_Running_object_number_',
-        '#_2_FLAGS_Extraction_flags_'],
-                axis=1),
-            self.encoded,
+        self.X_tr, self.X_te, self.y_tr, self.y_te = train_test_split(self.df,
+            self.targets, stratify=self.targets,
             test_size=self.ts,
             random_state=self.rs)
 
@@ -395,22 +403,32 @@ class RunForest:
             """)
 
 if __name__ == '__main__':
-    # print('yeet')
-    from time import time
-    recalls = 0
-    runs = 20
-    st = time()
-    rfc = RunForest()
-    for i in range(runs):
-        rfc.runRFC()
-        rfc.analytics()
-        recalls = recalls + rfc.analysis.recall
-    # print(rfc.analysis.recall)
-    print('RUNTIME: ',time()-st)
-    print(recalls/runs)
-    # print(rfc.analysis.ftImp)
+    # # print('yeet')
+    # from time import time
+    # recalls = 0
+    # runs = 20
+    # st = time()
+    # rfc = RunForest()
+    # for i in range(runs):
+    #     rfc.runRFC()
+    #     rfc.analytics()
+    #     recalls = recalls + rfc.analysis.recall
+    # # print(rfc.analysis.recall)
+    # print('RUNTIME: ',time()-st)
+    # print(recalls/runs)
+    # # print(rfc.analysis.ftImp)
+    rf = RunForest()
+    rf.runRFC()
+    rf.analytics()
+    rf.analysis.optimize()
+    print(rf.analysis.grid_search.best_params_)
+    print(rf.analysis.optConfMatrix)
 
 
+#           max_depth = 3
+#        max_features = 10
+#   min_samples_split = 5
+#        n_estimators = 100
 
 
 

@@ -7,7 +7,8 @@ class Kowalski:
 
     def __init__(self,forest):
         from sklearn.metrics import confusion_matrix
-        from sklearn.metrics import recall_score, precision_score
+        from sklearn.metrics import recall_score,precision_score,accuracy_score
+        from sklearn.metrics import make_scorer
         from collections import OrderedDict
         '''
         forest is a RunForest object
@@ -37,6 +38,17 @@ class Kowalski:
         # the positive samples."
         self.precision = precision_score(self.__frst.y_te,
             self.__frst.y_pred_tree)
+        self.param_grid = {
+            'min_samples_split' : [3,5,10],
+            'n_estimators' : [100,300],
+            'max_depth' : [3,5,15,25],
+            'max_features' : [3,5,10,20]
+        }
+        self.scorers = {
+            'precision_score' : make_scorer(precision_score),
+            'recall_score' : make_scorer(recall_score),
+            'accuracy_score' : make_scorer(accuracy_score)
+        }
         # "The precision is intuitively the ability of the classifier not to
         # label as positive a sample that is negative."
 
@@ -49,7 +61,7 @@ class Kowalski:
         # this finds the index of the result WITHIN the test set self.X_te
         for i in range(len(self.__frst.y_pred_tree)):
             pre = self.__frst.y_pred_tree[i]
-            act = self.__frst.y_te[i]
+            act = self.__frst.y_te.iloc[i]
             if pre == 1 and pre == act:
                 self.truPosInd.append(i)
             if pre == 1 and pre != act:
@@ -74,9 +86,46 @@ class Kowalski:
         for i in [self.truPos, self.falPos, self.truNeg, self.falNeg]:
             for row in i: # row is a pandas Series
                 testname = row.name
-                temp = self.__frst.df.loc[testname]
-                row['#_46_AST_STATUS'] = temp['#_46_AST_STATUS']
-                row['#_47_THUMB_PATH'] = temp['#_47_THUMB_PATH']
+                # temp = self.__frst.df.loc[testname]
+                row['#_46_AST_STATUS'] = 'YES' if (
+                    self.__frst.targets[testname]==1) else 'NO'
+                row['#_47_THUMB_PATH'] = self.__frst.fnames[testname]
+
+    def optimize(self, refit_score='recall_score'):
+        from sklearn.ensemble import RandomForestClassifier
+        from time import time
+        st = time()
+        # remember that __clf is NOT a RunForest object
+        self.__clf = RandomForestClassifier(n_jobs=-1)
+        # the code this is from returns grid_search (GridSearchCV object)
+        # here it is stored in the grid_search attribute instead
+        self.__grid_search_wrapper(refit_score)
+        print('RUNTIME: ',time()-st)
+
+    def __grid_search_wrapper(self, refit_score='recall_score'):
+        from sklearn.model_selection import GridSearchCV, StratifiedKFold
+        from sklearn.metrics import roc_curve, precision_recall_curve, auc
+        from sklearn.metrics import make_scorer, recall_score, accuracy_score
+        from sklearn.metrics import precision_score, confusion_matrix
+        import matplotlib.pyplot as plt
+        import pandas as pd
+        """
+        Taken from:
+        https://towardsdatascience.com/
+        fine-tuning-a-classifier-in-scikit-learn-66e048c21e65
+        (and then edited, of course)
+        fits a GridSearchCV classifier using refit_score for optimization
+        """
+        skf = StratifiedKFold(n_splits=10)
+        self.grid_search = GridSearchCV(self.__clf, self.param_grid,
+            scoring=self.scorers, refit=refit_score, cv=skf,verbose=100,
+            return_train_score=True, n_jobs=-1)
+        self.grid_search.fit(self.__frst.X_tr.values, self.__frst.y_tr.values)
+        # Use .best_params_ attribute of grid_pred
+        self.grid_pred = self.grid_search.predict(self.__frst.X_te.values)
+        self.optConfMatrix = pd.DataFrame(
+            confusion_matrix(self.__frst.y_te,self.grid_pred),
+            columns=['pred_neg','pred_pos'],index=['neg','pos'])
 
     # Pay no attention to this incredibly important static method
     @staticmethod
