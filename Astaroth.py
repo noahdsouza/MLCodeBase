@@ -54,7 +54,7 @@ class Astaroth(tk.Tk):
             button (see below) also probably won't work too well
         *** NEW Back Button (up arrow key) decrements 'num' and sends you back
             by one thumbnail. Keep in mind, this one is new and developed
-            hastily. It may not work super well at the moment.
+            hastily. It does not work super well at the moment.
         *** NEW static functions at the bottom of the class, specifically
             Astaroth.runAstaroth(), help make running the program a bit easier
         '''

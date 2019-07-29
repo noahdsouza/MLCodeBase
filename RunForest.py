@@ -1,5 +1,5 @@
 '''
-Last updated Wednesday July 24, 2019
+Last updated Monday July 29, 2019
 Author: Noah D'Souza
 Designed and tested on Python 3.6.3
 '''
@@ -46,6 +46,10 @@ class RunForest:
 
     def prepDictList(self):
         import os
+        '''
+        Scrapes (properly constructed) directories for data and turns turns it
+        into a giant list of dictionaries
+        '''
         self.dictlist = []
         # self.foldernames = []
         for fname in os.listdir('NO/'):
@@ -59,6 +63,10 @@ class RunForest:
         #     self.dictlist.append(RunForest.prepDict('MAYBE',fname))
 
     def plotGroups(self):
+        '''
+        Fairly obsolete method for visualizing which data points have been
+        classified as asteroid/not-asteroid by a user
+        '''
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots()
         for name, group in self.groups:
@@ -76,25 +84,35 @@ class RunForest:
     def makeTrainSet(self,ts=testsize,rs=randomstate):
         from sklearn.model_selection import train_test_split
         from sklearn.preprocessing import LabelBinarizer
+        '''
+        Splits the prepared set into training and test sets, dropping all
+        features that are shitty or just can't be encoded. The targets and
+        filenames are saved into attributes before being dropped, so don't trip.
+        '''
         # ts is a float portion of the data put into the test set
         # rs is an int seed for the random state
         if ts != RunForest.testsize:
             self.ts = ts
         if rs != RunForest.randomstate:
             self.rs = rs
-        le = LabelBinarizer()
-        # le.fit(['NO','YES'])
-        self.df['#_46_AST_STATUS'] = le.fit_transform(
-            self.df['#_46_AST_STATUS'].values)
-        # self.df['#_47_THUMB_PATH'] = le.fit_transform(
-        #     self.df['#_47_THUMB_PATH'].values)
-        self.targets = self.df['#_46_AST_STATUS']
-        self.fnames = self.df['#_47_THUMB_PATH']
-        # self.encoded = le.transform(self.df['#_46_AST_STATUS'])
-        self.df.drop(['#_46_AST_STATUS',
-                      '#_47_THUMB_PATH',
-                      '#_2_FLAGS_Extraction_flags_'],
-                      axis=1, inplace=True)
+        if '#_46_AST_STATUS' in self.df:
+            le = LabelBinarizer()
+            # le.fit(['NO','YES'])
+            self.df['#_46_AST_STATUS'] = le.fit_transform(
+                self.df['#_46_AST_STATUS'].values)
+            # self.df['#_47_THUMB_PATH'] = le.fit_transform(
+            #     self.df['#_47_THUMB_PATH'].values)
+            self.targets = self.df['#_46_AST_STATUS']
+            self.fnames = self.df['#_47_THUMB_PATH']
+            # self.encoded = le.transform(self.df['#_46_AST_STATUS'])
+            self.df.drop(['#_46_AST_STATUS',
+        '#_47_THUMB_PATH',
+        # '#_3_ALPHAWIN_J2000_Windowed_right_ascension_(J2000)_[deg]',
+        # '#_17_X_IMAGE_DBL_Object_position_along_x_(double_precision)_[pixel]',
+        # '#_18_Y_IMAGE_DBL_Object_position_along_y_(double_precision)_[pixel]',
+        # '#_4_DELTAWIN_J2000_windowed_declination_(J2000)_[deg]',
+        '#_2_FLAGS_Extraction_flags_'],
+        axis=1, inplace=True)
         # self.df.drop([
         # '#_46_AST_STATUS',
         # '#_47_THUMB_PATH',
@@ -123,6 +141,10 @@ class RunForest:
 
     def runRFC(self, tsR=testsize, rsR=randomstate):
         from sklearn.ensemble import RandomForestClassifier as RFC
+        '''
+        Runs a RandomForestClassifier on the training set and fits it to the
+        test set. Compare y_pred_tree to y_te to get analytics
+        '''
         # from sklearn.ensemble import ExtraTreesClassifier as ETC
         if not (hasattr(self, 'X_tr') and hasattr(self, 'X_te') and
                 hasattr(self, 'y_tr') and hasattr(self, 'y_te')):
@@ -141,16 +163,24 @@ class RunForest:
             print("USING PRE-EXISTING TRAINING SET. IGNORING KEYWORD ARGUMENTS.")
             print("RE-RUN RunForest.makeTrainSet() IF YOU WANT NEW KWARGS.")
         # NB:   These RFC parameters can be changed!! Please do!!
-        # NOTE: increasing n_jobs actually makes this slower, so consider that
-        self.f = RFC(n_estimators=1000,
-                     max_features=1,
-                     oob_score=True,
+            # NOTE: They have been optimized with Kowalski.optimize() though
+        # NOTE: increasing n_jobs sometimes makes this slower, so consider that
+        self.f = RFC(n_estimators=100,
+                     max_features=3,
+                     # oob_score=True,
+                     max_depth=3,
+                     min_samples_split=10,
                      verbose=1)
         self.f.fit(self.X_tr, self.y_tr)
         self.y_pred_tree = self.f.predict(self.X_te)
 
     def plotRFC(self):
         import matplotlib.pyplot as plt
+        '''
+        Plots color-coordinated test set (stars, yellow=predicted positive,
+        purple=predicted negative) on the training set (dots, red=actual
+        positive, blue=actual negative) in a position (actual locations)
+        '''
         fig, ax = plt.subplots()
         sc = ax.scatter(
             self.X_te[
@@ -179,12 +209,21 @@ class RunForest:
 
     def analytics(self):
         from Kowalski import Kowalski
+        '''
+        Makes a Kowalski object for analysis purposes. See Kowalski.py for more
+        details. There will likely be more to this at some point. I think.
+        '''
         self.analysis = Kowalski(self)
         self.analysis.collect()
 
+# -------------------------- ENTER: STATIC METHODS -------------------------- #
+
     @staticmethod
     def typeFix(d):
-        # Turn numbers stored as strings into ints or floats
+        '''
+        Static helper method for prepDict()
+        Turns numbers stored as strings (in a dictionary) into ints or floats
+        '''
         for key in list(d):
             if key == d[key]:
                 d.pop(key)
@@ -196,6 +235,12 @@ class RunForest:
     @staticmethod
     def prepDict(dec, fn):
         import pickle
+        '''
+        Static helper method for prepDictList(). Does initial loading and
+        converting (with help from other helpers, of course)
+        dec is 'YES', 'NO', or 'MAYBE'
+        fn is a filename, not a path
+        '''
         # dec is 'YES', 'NO', or 'MAYBE'
         # fn is a filename
         tempdict = pickle.load(open((dec+'/'+fn+'/'+fn+'.dict'),'rb'))
@@ -215,6 +260,11 @@ class RunForest:
     def repeatOffenders(num):
         # import random
         import multiprocessing
+        '''
+        Runs through runRFC() a bunch of times, recording which objects appear
+        as false-negatives most often (so that no asteroids can kill us)
+        num is just how many loops you want to run
+        '''
         manager = multiprocessing.Manager()
         ret_dict = manager.dict()
         processes = []
@@ -239,6 +289,12 @@ class RunForest:
         import numpy as np
         from time import time
         import multiprocessing
+        '''
+        Self-explanatory name: this function has a DUMMY-thicc loop that runs
+        runRFC() with different test sizes and random states and then graphs
+        the elements of a confusion matrix on one monstrous graph
+        Made it a static method so it isn't too reliant on the class
+        '''
         tpt, fpt, tnt, fnt = [],[],[],[]
         x = np.linspace(0.95,0.05,20)
         xr = np.linspace(0.05,0.95,20)
@@ -290,6 +346,10 @@ class RunForest:
     @staticmethod
     def workerTL(x,i,ret_dict):
         tpt, fpt, tnt, fnt = [],[],[],[]
+        '''
+        Static helper method for thickLoop(). It's basically just a worker for
+        multiprocessing purposes
+        '''
         rf = RunForest()
         for j in x:
             rf.runRFC(tsR=j, rsR=i)
@@ -303,6 +363,10 @@ class RunForest:
     @staticmethod
     def workerRO(i,ret_dict):
         import random
+        '''
+        Static helper method for repeatOffenders(). Again, just a worker method
+        to facilitate multiprocessing
+        '''
         rf = RunForest()
         # repeats = {}
         # for i in range(num):
@@ -320,7 +384,8 @@ class RunForest:
 
     @staticmethod
     def print_ret_dict(ret):
-        for k,v in ret.items(): #use this for printing ret_dict
+        # use this for pretty-printing the ret_dict from thickLoop()
+        for k,v in ret.items():
             print(k,'{')
             for k1,v1 in v.items():
                 print('    ',k1,'{')
@@ -333,6 +398,10 @@ class RunForest:
     @staticmethod
     def runforrest():
         import random
+        '''
+        Arguably the most important method in this class. Do not delete or I
+        WILL track you down and cry uncontrollably until you put it back.
+        '''
         x = random.randint(1,11)
         if x==1:
             print("""
@@ -403,6 +472,7 @@ class RunForest:
             """)
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
     # # print('yeet')
     # from time import time
     # recalls = 0
@@ -417,12 +487,28 @@ if __name__ == '__main__':
     # print('RUNTIME: ',time()-st)
     # print(recalls/runs)
     # # print(rfc.analysis.ftImp)
+
+    # rf = RunForest()
+    # rf.runRFC()
+    # rf.analytics()
+    # rf.analysis.optimize()
+    # print(rf.analysis.grid_search.best_params_)
+    # print(rf.analysis.optConfMatrix)
+
     rf = RunForest()
-    rf.runRFC()
-    rf.analytics()
-    rf.analysis.optimize()
-    print(rf.analysis.grid_search.best_params_)
-    print(rf.analysis.optConfMatrix)
+    inds = []
+    pnts = []
+    for i in range(27,50):
+        rf.makeTrainSet(ts=0.5,rs=i)
+        rf.runRFC()
+        rf.analytics()
+        inds.append(i)
+        pnts.append(rf.analysis.recall)
+    fig, ax = plt.subplots()
+    ax.plot(inds,pnts,'b.')
+    ax.set_xlabel('Random State')
+    ax.set_ylabel('Recall %')
+    plt.show()
 
 
 #           max_depth = 3

@@ -1,5 +1,5 @@
 '''
-Last updated Wednesday July 24, 2019
+Last updated Monday July 29, 2019
 Author: Noah D'Souza
 Designed and tested on Python 3.6.3
 '''
@@ -14,7 +14,8 @@ class Kowalski:
         forest is a RunForest object
         How lucky of us to be using binary classification
         This is just a helper class for running metrics on a RandomForest
-        prediction set. It import RunForest and RunForest imports it. Cute.
+        prediction set. It imports RunForest and RunForest imports it. Cute.
+        If only my parents' marriage worked that well.
         '''
         self.__frst = forest
             # making this private to avoid confusion in RunForest
@@ -54,6 +55,13 @@ class Kowalski:
 
     def collect(self):
         import numpy as np
+        '''
+        Essentially the main function of this class. It extracts the
+        true-positives, false-positives, true-negatives, and false-negatives
+        from the data (and confusion matrix) and puts them in little piles.
+        Conveniently, the data that needed to be dropped to make the training
+        set is plopped back in. You're welcome, me.
+        '''
         self.positiveInd = np.where(self.__frst.y_pred_tree==1)
         self.negativeInd = np.where(self.__frst.y_pred_tree==0)
         self.truPosInd, self.falPosInd = [],[]
@@ -83,10 +91,15 @@ class Kowalski:
 
     def attachTags(self):
         # remember that truPos/falPos/truNeg/falNeg are LISTS
+        '''
+        This facilitates reattaching the dropped data
+        (see: RunForest.makeTrainSet()) so you can see which files are messing
+        everything up.
+        '''
         for i in [self.truPos, self.falPos, self.truNeg, self.falNeg]:
             for row in i: # row is a pandas Series
                 testname = row.name
-                # temp = self.__frst.df.loc[testname]
+                # NOTE: This converts #_46_AST_STATUS from encoded to unencoded
                 row['#_46_AST_STATUS'] = 'YES' if (
                     self.__frst.targets[testname]==1) else 'NO'
                 row['#_47_THUMB_PATH'] = self.__frst.fnames[testname]
@@ -94,11 +107,19 @@ class Kowalski:
     def optimize(self, refit_score='recall_score'):
         from sklearn.ensemble import RandomForestClassifier
         from time import time
+        '''
+        You might want to run this one on a fast computer. It tests every
+        combination of RandomForestClassifier parameters you give it (see:
+        param_grid in __init__) and pumps out the best one (and its confusion
+        matrix). Sorry for using a brute-force strategy, @NickSteelman
+        '''
         st = time()
-        # remember that __clf is NOT a RunForest object
+        # NB: remember that __clf is NOT a RunForest object
+            # It's a fresh and clean new RandomForestClassifier object
         self.__clf = RandomForestClassifier(n_jobs=-1)
-        # the code this is from returns grid_search (GridSearchCV object)
-        # here it is stored in the grid_search attribute instead
+        # the code this is based on returns 'grid_search' (GridSearchCV object)
+        # here it is stored in the 'grid_search' attribute instead because
+        # returning objects is for classless (haha, get it?) chumps
         self.__grid_search_wrapper(refit_score)
         print('RUNTIME: ',time()-st)
 
@@ -107,7 +128,6 @@ class Kowalski:
         from sklearn.metrics import roc_curve, precision_recall_curve, auc
         from sklearn.metrics import make_scorer, recall_score, accuracy_score
         from sklearn.metrics import precision_score, confusion_matrix
-        import matplotlib.pyplot as plt
         import pandas as pd
         """
         Taken from:
@@ -115,6 +135,7 @@ class Kowalski:
         fine-tuning-a-classifier-in-scikit-learn-66e048c21e65
         (and then edited, of course)
         fits a GridSearchCV classifier using refit_score for optimization
+        Helper method for optimize(), does a lot of the heavy lifting
         """
         skf = StratifiedKFold(n_splits=10)
         self.grid_search = GridSearchCV(self.__clf, self.param_grid,
@@ -155,23 +176,6 @@ class Kowalski:
 ....................................';::;,,,,oO00000OOkkdooodxdc;;;;;,,,,,,;;;:
 ...................................'';;,,,;:cclooollc::;,'.',,;;;,;;,,,,,,;;;::
         """)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
