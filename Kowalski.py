@@ -11,7 +11,7 @@ class Kowalski:
         from sklearn.metrics import make_scorer
         from collections import OrderedDict
         '''
-        forest is a RunForest object
+        forest is a RunForest object, and becomes the __frst private attribute
         How lucky of us to be using binary classification
         This is just a helper class for running metrics on a RandomForest
         prediction set. It imports RunForest and RunForest imports it. Cute.
