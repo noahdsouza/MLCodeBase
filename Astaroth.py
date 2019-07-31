@@ -1,5 +1,5 @@
 '''
-Last updated Wednesday July 24, 2019
+Last updated Wednesday July 31, 2019
 Author: Noah D'Souza
 Designed and tested in Python 3.6.3
 '''
@@ -22,7 +22,8 @@ class Astaroth(tk.Tk):
         self.configure(bg='black')
         # self.fastmode = fastmode
         '''
-        Yes I'm aware that "Astaroth" is a demon's name. It sounds cool.
+        (AST)eroid cl(A)ssification and p(RO)cessing in py(TH)on
+        Yes I'm aware that "Astaroth" is a demon's name. It just sounds cool.
         This class builds "Tinder for Asteroids" a.k.a. Astaroth.
         This code file should be placed in an appropriately constructed
         filesystem such that it can naturally loop. The codebase should contain
@@ -48,15 +49,15 @@ class Astaroth(tk.Tk):
         the object's AsteroidProfile instance. Most of the (private) functions
         run (relatively) sequentially, so I hope this isn't too hard to follow
         :)
-        *** NEW (optional) Fast Mode removes the need to hit Enter to resubmit,
-            and does it automatically. This does mean, however, that you can't
-            submit a different image easily in the middle, and the new back
-            button (see below) also probably won't work too well
+        (Optional) Fast Mode removes the need to hit Enter to resubmit, and does
+        it automatically. This does mean, however, that you can't submit a
+        different image easily in the middle, and the new back button (see
+        below) also probably won't work too well
         *** NEW Back Button (up arrow key) decrements 'num' and sends you back
             by one thumbnail. Keep in mind, this one is new and developed
             hastily. It does not work super well at the moment.
-        *** NEW static functions at the bottom of the class, specifically
-            Astaroth.runAstaroth(), help make running the program a bit easier
+        *** Keybindings (arrows) are now only active after a filepath has been
+            submitted, so there should be less accidents (like me) now
         '''
 
         self.imgpath = None
@@ -73,8 +74,13 @@ class Astaroth(tk.Tk):
         self.geometry('%dx%d+%d+%d' % (w, h, x, y))
 
         ''' INPUT FILEPATHS '''
-        tk.Label(self, text='IMAGE FILEPATH', anchor='e', width=20, bg='black',
-                        fg='gray', font=('Arial',14)).grid(row=0, sticky='e')
+        self.submitGUI = tk.Button(self, text='IMAGE FILEPATH',
+                        command=self.__fileInterface,
+                        highlightthickness=0, bg='gray20', fg='gray',
+                        font=('Arial',14))
+        self.submitGUI.grid(row=0,sticky='e')
+        # tk.Label(self, text='IMAGE FILEPATH', anchor='e', width=20, bg='black',
+        #                 fg='gray', font=('Arial',14)).grid(row=0, sticky='e')
         self.imgpathIN = tk.Entry(self, bg='gray3', fg='gray',
                         font=('Arial',14))
         self.submit = tk.Button(self, text='SUBMIT', command=self.__getPaths,
@@ -99,15 +105,15 @@ class Astaroth(tk.Tk):
         self.nah = tk.Button(self, text='\u25c0 \u25c0 nah',
                         bg='#ff5454', width=8, font=('Arial',20),
                         command=self.__swipeNahh, highlightthickness=0)
-        self.bind('<Left>',self.__swipeNahh)
+        # self.bind('<Left>',self.__swipeNahh)
         self.may = tk.Button(self, text='\u25c0 maybe \u25b6',
                         bg='#567bff', width=8, font=('Arial',20),
                         command=self.__swipeMayb, highlightthickness=0)
-        self.bind('<Down>',self.__swipeMayb)
+        # self.bind('<Down>',self.__swipeMayb)
         self.yea = tk.Button(self, text='yea \u25b6 \u25b6',
                         bg='#81ff54', width=8, font=('Arial',20),
                         command=self.__swipeYeah, highlightthickness=0)
-        self.bind('<Right>',self.__swipeYeah)
+        # self.bind('<Right>',self.__swipeYeah)
         self.nah.grid(row=4, column=0, padx=(5,5), pady=(5,5))
         self.may.grid(row=4, column=1, padx=(5,5), pady=(5,5))
         self.yea.grid(row=4, column=2, padx=(5,5), pady=(5,5))
@@ -121,7 +127,7 @@ class Astaroth(tk.Tk):
         ''' BACK button '''
         self.esc = tk.Button(self, text='BACK',command=self.backb, bg='gray20',
                         fg='gray', highlightthickness=0, font=('Arial',20))
-        self.bind('<Up>',self.backb)
+        # self.bind('<Up>',self.backb)
         self.esc.grid(row=1, column=0)
 
     def __getPaths(self,event=None):
@@ -129,12 +135,21 @@ class Astaroth(tk.Tk):
         # If this isn't your first rodeo (iteration or asteroid), then it'll
         # take the saved path and reinput it with a 'SUBMIT' button invocation
         # Also call Astaroth.__makeImgProf()
+        self.unbind('<Left>')
+        self.unbind('<Down>')
+        self.unbind('<Right>')
+        self.unbind('<Up>')
         if not os.path.isfile('txtpath.txt'):
             self.imgpath = self.imgpathIN.get()
             pickle.dump(self.imgpath, open('txtpath.txt','wb'))
         else:
             self.imgpath = pickle.load(open('txtpath.txt','rb'))
         # self.txtpath = self.txtpathIN.get()
+        self.bind('<Left>',self.__swipeNahh)
+        self.bind('<Down>',self.__swipeMayb)
+        self.bind('<Right>',self.__swipeYeah)
+        self.bind('<Up>',self.backb)
+        # print('ARROW KEYS BOUND TO SWIPE INPUT')
         self.txtpath = 'FITS_TEXT/'+self.imgpath[12:-5]+'.txt'
         self.thumbfolder = self.imgpath[12:-5]+'_'+'{:05d}'.format(self.num+1)
             # thumbfolder --> remove imgpath FITS extension, add trailing number
@@ -142,6 +157,40 @@ class Astaroth(tk.Tk):
             # NOTE: thumbfolder does NOT have an extension -- those are added
             # when saving files -- thumbfolder names a folder that holds files
         self.__makeImgProf()
+
+    def __fileInterface(self):
+        from tkinter.filedialog import askopenfilename
+        '''
+        This essentially does the same thing as __getPaths(), but instead it
+        opens a file explorer so a user can browse FITS_IMAGES
+        To use it, just click on the "IMAGE FILEPATH" button
+        '''
+        self.unbind('<Left>')
+        self.unbind('<Down>')
+        self.unbind('<Right>')
+        self.unbind('<Up>')
+        if not os.path.isfile('txtpath.txt'):
+            ip = askopenfilename(initialdir='FITS_IMAGES',
+                title='Select FITS File',
+                filetypes=(('FITS files','*.fits'),('FITS files','*.fit')))
+            try:
+                if ip[ip.find('FITS_IMAGES'):] != '':
+                    self.imgpath = ip[ip.find('FITS_IMAGES'):]
+                    pickle.dump(self.imgpath, open('txtpath.txt','wb'))
+                    self.bind('<Left>',self.__swipeNahh)
+                    self.bind('<Down>',self.__swipeMayb)
+                    self.bind('<Right>',self.__swipeYeah)
+                    self.bind('<Up>',self.backb)
+                    self.txtpath = 'FITS_TEXT/'+self.imgpath[12:-5]+'.txt'
+                    self.thumbfolder = self.imgpath[12:-5]+'_'+'{:05d}'.format(
+                        self.num+1)
+                    self.__makeImgProf()
+                else:
+                    print('ENTER OR CHOOSE A FILEPATH')
+            except AttributeError:
+                print('ENTER OR CHOOSE A FILEPATH')
+        else:
+            self.imgpath = pickle.load(open('txtpath.txt','rb'))
 
     def __makeImgProf(self):
         # Make an ImageProfile object and scrape it for relevant data
@@ -189,63 +238,88 @@ class Astaroth(tk.Tk):
     # hate you. That's why. (It's actually because Tkinter doesn't like it when
     # you bind different things to the same function, even if it takes a
     # different parameter.) I could ~probably~ fix it with switchcases? Probably.
+    def __swiper(self,dec,event=None):
+        if not os.path.exists(dec):
+            os.mkdir(dec)
+        try:
+            if os.path.exists(dec+'/'+self.thumbfolder):
+                shutil.rmtree(dec+'/'+self.thumbfolder)
+            os.mkdir(dec+'/'+self.thumbfolder)
+        except AttributeError:
+            print('SUBMIT OR RESUBMIT FILEPATH (ENTER) BEFORE SWIPING')
+        else:
+            os.rename(self.thumbfolder+'.png',
+                dec+'/'+self.thumbfolder+'/'+self.thumbfolder+'.png')
+            os.rename(self.thumbfolder+'F.png',
+                dec+'/'+self.thumbfolder+'/'+self.thumbfolder+'F.png')
+            self.AstProf.save(
+                dec+'/'+self.thumbfolder+'/'+self.thumbfolder+'.dict')
+            self.destroy()
+
     def __swipeYeah(self,event=None):
-        # add relevant AsteroidProfile and images to the 'YES' pile
-        # kill window so that the loop (see: @staticmethods) can progress
-        if not os.path.exists('YES'):
-            os.mkdir('YES')
-        try:
-            if os.path.exists('YES/'+self.thumbfolder):
-                shutil.rmtree('YES/'+self.thumbfolder)
-            os.mkdir('YES/'+self.thumbfolder)
-        except AttributeError:
-            print('SUBMIT OR RESUBMIT FILEPATH (ENTER) BEFORE SWIPING')
-        else:
-            os.rename(self.thumbfolder+'.png',
-                'YES/'+self.thumbfolder+'/'+self.thumbfolder+'.png')
-            os.rename(self.thumbfolder+'F.png',
-                'YES/'+self.thumbfolder+'/'+self.thumbfolder+'F.png')
-            self.AstProf.save(
-                'YES/'+self.thumbfolder+'/'+self.thumbfolder+'.dict')
-            self.destroy()
+        self.__swiper('YES')
     def __swipeNahh(self,event=None):
-        # add relevant AsteroidProfile and images to the 'NO' pile
-        # kill window so that the loop (see: @staticmethods) can progress
-        if not os.path.exists('NO'):
-            os.mkdir('NO')
-        try:
-            if os.path.exists('NO/'+self.thumbfolder):
-                shutil.rmtree('NO/'+self.thumbfolder)
-            os.mkdir('NO/'+self.thumbfolder)
-        except AttributeError:
-            print('SUBMIT OR RESUBMIT FILEPATH (ENTER) BEFORE SWIPING')
-        else:
-            os.rename(self.thumbfolder+'.png',
-                'NO/'+self.thumbfolder+'/'+self.thumbfolder+'.png')
-            os.rename(self.thumbfolder+'F.png',
-                'NO/'+self.thumbfolder+'/'+self.thumbfolder+'F.png')
-            self.AstProf.save(
-                'NO/'+self.thumbfolder+'/'+self.thumbfolder+'.dict')
-            self.destroy()
+        self.__swiper('NO')
     def __swipeMayb(self,event=None):
-        # add relevant AsteroidProfile and images to the 'MAYBE' pile
-        # kill window so that the loop (see: @staticmethods) can progress
-        if not os.path.exists('MAYBE'):
-            os.mkdir('MAYBE')
-        try:
-            if os.path.exists('MAYBE/'+self.thumbfolder):
-                shutil.rmtree('MAYBE/'+self.thumbfolder)
-            os.mkdir('MAYBE/'+self.thumbfolder)
-        except AttributeError:
-            print('SUBMIT OR RESUBMIT FILEPATH (ENTER) BEFORE SWIPING')
-        else:
-            os.rename(self.thumbfolder+'.png',
-                'MAYBE/'+self.thumbfolder+'/'+self.thumbfolder+'.png')
-            os.rename(self.thumbfolder+'F.png',
-                'MAYBE/'+self.thumbfolder+'/'+self.thumbfolder+'F.png')
-            self.AstProf.save(
-                'MAYBE/'+self.thumbfolder+'/'+self.thumbfolder+'.dict')
-            self.destroy()
+        self.__swiper('MAYBE')
+
+    # def __swipeYeah(self,event=None):
+    #     # add relevant AsteroidProfile and images to the 'YES' pile
+    #     # kill window so that the loop (see: @staticmethods) can progress
+    #     if not os.path.exists('YES'):
+    #         os.mkdir('YES')
+    #     try:
+    #         if os.path.exists('YES/'+self.thumbfolder):
+    #             shutil.rmtree('YES/'+self.thumbfolder)
+    #         os.mkdir('YES/'+self.thumbfolder)
+    #     except AttributeError:
+    #         print('SUBMIT OR RESUBMIT FILEPATH (ENTER) BEFORE SWIPING')
+    #     else:
+    #         os.rename(self.thumbfolder+'.png',
+    #             'YES/'+self.thumbfolder+'/'+self.thumbfolder+'.png')
+    #         os.rename(self.thumbfolder+'F.png',
+    #             'YES/'+self.thumbfolder+'/'+self.thumbfolder+'F.png')
+    #         self.AstProf.save(
+    #             'YES/'+self.thumbfolder+'/'+self.thumbfolder+'.dict')
+    #         self.destroy()
+    # def __swipeNahh(self,event=None):
+    #     # add relevant AsteroidProfile and images to the 'NO' pile
+    #     # kill window so that the loop (see: @staticmethods) can progress
+    #     if not os.path.exists('NO'):
+    #         os.mkdir('NO')
+    #     try:
+    #         if os.path.exists('NO/'+self.thumbfolder):
+    #             shutil.rmtree('NO/'+self.thumbfolder)
+    #         os.mkdir('NO/'+self.thumbfolder)
+    #     except AttributeError:
+    #         print('SUBMIT OR RESUBMIT FILEPATH (ENTER) BEFORE SWIPING')
+    #     else:
+    #         os.rename(self.thumbfolder+'.png',
+    #             'NO/'+self.thumbfolder+'/'+self.thumbfolder+'.png')
+    #         os.rename(self.thumbfolder+'F.png',
+    #             'NO/'+self.thumbfolder+'/'+self.thumbfolder+'F.png')
+    #         self.AstProf.save(
+    #             'NO/'+self.thumbfolder+'/'+self.thumbfolder+'.dict')
+    #         self.destroy()
+    # def __swipeMayb(self,event=None):
+    #     # add relevant AsteroidProfile and images to the 'MAYBE' pile
+    #     # kill window so that the loop (see: @staticmethods) can progress
+    #     if not os.path.exists('MAYBE'):
+    #         os.mkdir('MAYBE')
+    #     try:
+    #         if os.path.exists('MAYBE/'+self.thumbfolder):
+    #             shutil.rmtree('MAYBE/'+self.thumbfolder)
+    #         os.mkdir('MAYBE/'+self.thumbfolder)
+    #     except AttributeError:
+    #         print('SUBMIT OR RESUBMIT FILEPATH (ENTER) BEFORE SWIPING')
+    #     else:
+    #         os.rename(self.thumbfolder+'.png',
+    #             'MAYBE/'+self.thumbfolder+'/'+self.thumbfolder+'.png')
+    #         os.rename(self.thumbfolder+'F.png',
+    #             'MAYBE/'+self.thumbfolder+'/'+self.thumbfolder+'F.png')
+    #         self.AstProf.save(
+    #             'MAYBE/'+self.thumbfolder+'/'+self.thumbfolder+'.dict')
+    #         self.destroy()
 
     def __exit(self, event=None):
         # Delete everything that we don't want just lying around
@@ -256,6 +330,7 @@ class Astaroth(tk.Tk):
                 os.remove(self.thumbfolder+'.png')
                 os.remove(self.thumbfolder+'F.png')
                 os.remove('txtpath.txt')
+        if os.path.isfile('txtpath.txt'): os.remove('txtpath.txt')
         sys.exit()
 
     def backb(self, event=None):
@@ -280,7 +355,7 @@ class Astaroth(tk.Tk):
             app = Astaroth(i)
             # app = Astaroth(i, fastmode=False)
             app.mainloop()
-            print(i)
+            print('OBJECT #: ',i)
             i+=1
 
     @staticmethod
