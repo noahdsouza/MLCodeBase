@@ -4,6 +4,14 @@ Author: Noah D'Souza
 Designed and tested on Python 3.6.3
 '''
 
+# def timer(func):
+#     # I may not work, don't worry about me
+#     def timed(*args, **kw):
+#         ts = time.time()
+#         result = func(*args, **kw)
+#         te = time.time()
+#         print(func.__name__, ' time: ', te-ts)
+
 class RunForest:
 
     # These are generally good parameters. Use them if you want.

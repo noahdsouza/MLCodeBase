@@ -4,9 +4,9 @@ Author: Noah D'Souza
 Designed and tested on Python 3.6.3
 '''
 
+
 class ImageProfile:
     # Class to store a lorg FITS image and its dummy thicc SoEx output
-
     def __init__(self,imgpath,txtpath=None):
         from makeThumbnail import FITSprocess
         from TXTtoCSV import TXTtoCSV
