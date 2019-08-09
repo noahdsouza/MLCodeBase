@@ -1,5 +1,5 @@
 '''
-Last updated Wednesday August 7, 2019
+Last updated Friday August 9, 2019
 Author: Noah D'Souza
 Many functions taken from: http://ps1images.stsci.edu/ps1_dr2_api.html
 Designed and tested on Python 3.6.3
@@ -9,55 +9,83 @@ If you get a "requests.exceptions.SSLError: HTTPSConnectionPool(): Max retries
 exceeded with url" error, run "pip install ndg-httpsclient" to fix it
 'FITS_CSV/g19960516960516063059a.csv'
 '''
-def removeStars(csvpath,mag=20):
+'''
+So this is all REALLY crude because it was cobbled together in three days at the
+end of the research period, so don't expect anything to work really well (if at
+all). Lots of these functions are from PanStarrs' API, but the less sophisticated
+looking ones were made by me. This should (very slowly) remove the stars from a
+Source Extractor output CSV (see TXTtoCSV to convert raw output). Theoretically.
+Strategically (un)comment certain blocks in removeStars to use/stop using
+multiprocessing, which is faster but sometimes just doesn't work at all.
+'''
+'''
+To whoever tries this after me, I suggest you try doing vectorization instead
+of multiprocessing to speed this up. It'll be tough to figure out, but probably
+worth the effort in terms of runtime.
+'''
+def removeStars(csvpath,mag=20,cores=4):
     # things greater than 20 on the red band can stay
     import pandas as pd
     from time import time
-    import multiprocessing
+    # import multiprocessing
     radius = 1/3600
     data = loadCSV(csvpath)
-    # noStars = data.copy()
-    manager = multiprocessing.Manager()
-    ns = manager.Namespace()
-    ns.noStars = data.copy()
-    # ret_dict = manager.dict()
-    processes = []
+    noStars = data.copy()
     st = time()
-    for index,row in data.iterrows():
-        process = multiprocessing.Process(target=worker,
-            args=(index,row,radius,ns,mag))
-        processes.append(process)
-    for j in processes:
-        j.start()
-    print('Working...')
-    for k in processes:
-        n.join()
+    # manager = multiprocessing.Manager()
+    # ns = manager.Namespace()
+    # ns.noStars = data.copy()
+
+    # # ret_dict = manager.dict()
+    # processes = []
     # for index,row in data.iterrows():
-    #     ra = row['#_3_ALPHAWIN_J2000_Windowed_right_ascension_(J2000)_[deg]']
-    #     dec = row['#_4_DELTAWIN_J2000_windowed_declination_(J2000)_[deg]']
-    #     stars = findStars(ra,dec,radius,{'nDetections.gt':1})
-    #     if isinstance(stars, pd.DataFrame):
-    #         for i in stars['rMeanPSFMag']:
-    #             if i < mag:
-    #                 noStars = noStars.drop(index)
-    #                 break
-    # noStars = noStars.reset_index(drop=True)
+    #     process = multiprocessing.Process(target=worker,
+    #         args=(index,row,radius,ns,mag))
+    #     processes.append(process)
+    # for j in processes:
+    #     j.start()
+    # print('Working...')
+    # for k in processes:
+    #     n.join()
+
+    # pool = multiprocessing.Pool(processes=cores)
+    # results = {}
+    # for index,row in data.iterrows():
+    #     results[index] = pool.apply_async(worker,
+    #         args=(index,row,radius,mag)).get()
+    # pool.close()
+    # pool.join()
+    # noStars = pd.Series(results)
+
+    for index,row in data.iterrows():
+        ra = row['#_3_ALPHAWIN_J2000_Windowed_right_ascension_(J2000)_[deg]']
+        dec = row['#_4_DELTAWIN_J2000_windowed_declination_(J2000)_[deg]']
+        stars = findStars(ra,dec,radius,{'nDetections.gt':1})
+        if isinstance(stars, pd.DataFrame):
+            for i in stars['rMeanPSFMag']:
+                if i < mag:
+                    noStars = noStars.drop(index)
+                    break
+
+    noStars = noStars.reset_index(drop=True)
     foo = type('foo',(),{'csvpath':csvpath,'radius':radius,
-                         'data':data,'noStars':ns.noStars})
+                         'data':data,'noStars':noStars})
     print(time()-st,' seconds')
     return foo
 
-def worker(index,row,radius,ns,mag):
-    import pandas as pd
-    ra = row['#_3_ALPHAWIN_J2000_Windowed_right_ascension_(J2000)_[deg]']
-    dec = row['#_4_DELTAWIN_J2000_windowed_declination_(J2000)_[deg]']
-    stars = findStars(ra,dec,radius,{'nDetections.gt':1})
-    if isinstance(stars, pd.DataFrame):
-        for i in stars['rMeanPSFMag']:
-            if i < mag:
-                ns.noStars.drop(index,inplace=True)
-                break
-
+# def worker(index,row,radius,mag):
+#     import pandas as pd
+#     ra = row['#_3_ALPHAWIN_J2000_Windowed_right_ascension_(J2000)_[deg]']
+#     dec = row['#_4_DELTAWIN_J2000_windowed_declination_(J2000)_[deg]']
+#     stars = findStars(ra,dec,radius,{'nDetections.gt':1})
+#     if isinstance(stars, pd.DataFrame):
+#         # for i in stars['rMeanPSFMag']:
+#         #     if i < mag:
+#         #         ns.noStars.drop(index,inplace=True)
+#         #         break
+#         if row['#_21_MAG_APER_Fixed_aperture_magnitude_vector_[mag]']<mag:
+#             ns.noStars.drop(index,inplace=True)
+#             # return stars
 
 def findStars(ra,dec,radius,constraints):
     import pandas as pd
