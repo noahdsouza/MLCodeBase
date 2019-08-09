@@ -17,6 +17,8 @@ class Astaroth(tk.Tk):
 
     def __init__(self, num):
         tk.Tk.__init__(self)
+        # this calls Tk's __init__ not Astaroth's since Astaroth is a child
+        # class of Tk, just so you know (and I remember)
         self.winfo_toplevel().title("A S T A R O T H")
         self.configure(bg='black')
         """
@@ -273,7 +275,7 @@ class Astaroth(tk.Tk):
         # Takes you back by one step in the loop with each keypress.
         # Re-categorizing an object you backtracked into will take you back to
         # the object you started going back from
-        if self.num == 1:
+        if self.num == 0:
             print('NOTHING TO GO BACK TO BRUH')
         else:
             self.num = self.num - 1
