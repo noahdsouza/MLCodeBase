@@ -4,7 +4,7 @@ fitsio==0.9.11
 future==0.16.0
 ipykernel==4.8.0
 ipython==6.2.1
-numpy==1.14.0
+numpy==1.22.0
 pep8==1.7.0
 Pillow==5.0.0
 pyparsing==2.2.0
